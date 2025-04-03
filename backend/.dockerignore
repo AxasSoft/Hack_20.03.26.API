@@ -1,0 +1,8 @@
+/__pycache__/
+app.egg-info
+.vscode
+.mypy_cache
+docker-stack.yml
+/.idea/
+*.ipynb
+*.backup

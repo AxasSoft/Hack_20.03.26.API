@@ -1,0 +1,16 @@
+.vscode
+.mypy_cache
+docker-stack.yml
+/.idea/
+*.ipynb
+/frontend/
+/referrals/
+/landing/
+/app-db-data/
+/app-db-app.data3/
+/app-db-data2/
+/app-db-data4/
+/support_bot/
+/portogal.iml
+/redis/
+redis/
