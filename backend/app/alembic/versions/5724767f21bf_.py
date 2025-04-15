@@ -8,6 +8,7 @@ Create Date: 2025-04-15 06:09:00.413240
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from sqlalchemy import inspect
 
 # revision identifiers, used by Alembic.
 revision = '5724767f21bf'
@@ -21,6 +22,7 @@ def upgrade():
     inspector = inspect(op.get_bind())
     columns = inspector.get_columns('excursionparticipant')
     column_exists = any(col['name'] == 'excursion_group_id' for col in columns)
+
     op.create_table('excursioncategoryimage',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('image', sa.String(), nullable=True),
