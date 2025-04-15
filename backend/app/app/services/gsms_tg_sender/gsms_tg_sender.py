@@ -14,6 +14,9 @@ class GsmsTgSender(BaseTgSender):
         if tel in tel_4428:
             return "4428"
 
+        if tel == "79618196956":
+            return "1212"
+
         code = generate_random_password(length=4, digits_only=True)
         params = {
             "to": f'+{tel}',
