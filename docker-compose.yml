@@ -47,22 +47,23 @@ services:
     depends_on:
       - db
 
-  redis:
-    image: redis:alpine
-    restart: always
-    command: "redis-server --appendonly yes --port 6379"
-    volumes:
-      - ./redis:/data
+#  redis:
+#    image: redis:alpine
+#    restart: always
+#    command: "redis-server --appendonly yes --port 6379"
+#    volumes:
+#      - ./redis:/data
 
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    restart: always
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    ports:
-      - "8070:8081"  # Открытый порт для Redis Commander
-    depends_on:
-      - "redis"
+#  redis-commander:
+#    image: rediscommander/redis-commander:latest
+#    restart: always
+#    environment:
+#      - REDIS_HOSTS=local:redis:6379
+#    ports:
+#      - "8070:8081"  # Открытый порт для Redis Commander
+#    depends_on:
+#      - "redis"
+
 
   nginx:
     image: nginx

@@ -187,20 +187,20 @@ def get_notificator() -> Notificator:
     return notificator
 
 
-# def get_redis_instance():
-#     redis_instance = redis.StrictRedis(
-#         host='109.172.82.145',
-#         port=6379,
-#         password='1=H5n,(zScv@Fd',
-#         username='default'
-#     )
-#     return redis_instance
-
-
 def get_redis():
-    return redis.Redis.from_url(
-        settings.REDIS_URL,
+    redis_instance = redis.StrictRedis(
+        host='85.92.111.28',
+        port=6379,
+        password='Ah%\no4{WKi\m(',
+        username='default'
     )
+    return redis_instance
+
+
+# def get_redis():
+#     return redis.Redis.from_url(
+#         settings.REDIS_URL,
+#     )
 
 
 def get_cache_sing(redis_instance=Depends(get_redis)):
