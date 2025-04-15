@@ -108,23 +108,24 @@ def verify_password_reset_token(token: str) -> Optional[str]:
         return None
 
 
-def generate_random_password(length: int) -> str:
+def generate_random_password(length: int, digits_only: bool=False) -> str:
     """
     Генерирует стороку, содержащую пароль
     :param length: длина генерируемой стрпоки
     :return: псевдослучайная строка, составленная из латинских букв в нижнем и верхнем регистре и цифр заданной длины
     """
     alphabet = [
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
         'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
         'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
         'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
         'y', 'z'
     ]
-
-    result = ''.join(random.choices(alphabet, k=length))
-
+    if digits_only:
+        result = ''.join(random.choices(alphabet[:10], k=length))
+    else:
+        result = ''.join(random.choices(alphabet, k=length))
     return result
 
 

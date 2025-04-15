@@ -37,6 +37,7 @@ router = APIRouter()
 async def send_code(
         data: schemas.verification_code.CreatingVerificationCode,
         db: Session = Depends(deps.get_db),
+        gsms_tg_sender: deps.BaseTgSender = Depends(deps.get_gsms_tg_sender),
 ):
-    code = crud.crud_verification_code.verification_code.create(db=db, obj_in=data)
+    code = crud.crud_verification_code.verification_code.create(db=db, gsms_tg_sender=gsms_tg_sender, obj_in=data)
     return schemas.response.SingleEntityResponse(data=getters.verification_code.get_verification_code(code))

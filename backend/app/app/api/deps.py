@@ -22,6 +22,8 @@ from ..notification.consumers import FireBaseConsumer, TerminalConsumer, DbConsu
 from ..notification.notificator import Notificator
 
 from app.utils.cache import Cache
+from ..services.gsms_tg_sender.base_gsms_tg_sender import BaseTgSender
+from ..services.gsms_tg_sender.gsms_tg_sender import GsmsTgSender
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -212,5 +214,8 @@ def get_cache_no_depends():
     return Cache(
         redis=get_redis(), response_schema=BaseResponse, ttl=settings.CACHE_TTL
     )
+
+def get_gsms_tg_sender() -> BaseTgSender:
+    return GsmsTgSender()
 
 
