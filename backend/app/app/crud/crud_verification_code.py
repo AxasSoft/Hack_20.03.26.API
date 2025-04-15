@@ -10,6 +10,7 @@ from app.crud.base import CRUDBase
 from app.exceptions import UnprocessableEntity
 from app.models.verification_code import VerificationCode
 from app.schemas.verification_code import CreatingVerificationCode, UpdatingVerificationCode, VerifyingCode
+from app.services.gsms_tg_sender.base_gsms_tg_sender import BaseTgSender
 
 
 class CRUDVerificationCode(CRUDBase[VerificationCode, CreatingVerificationCode, UpdatingVerificationCode]):
