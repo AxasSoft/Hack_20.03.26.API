@@ -42,7 +42,10 @@ from app.api.api_v1.endpoints import (
     sub_facts,
     dating_profile,
     feedback_order,
-    test
+    test,
+    excursion_category,
+    excursion,
+    excursion_review,
 )
 
 # from otter_mini.endpoints import router as chat_router
@@ -90,3 +93,4 @@ api_router.include_router(sub_genre_music.router, prefix="")
 api_router.include_router(dating_profile.router, prefix="")
 # api_router.include_router(chat_router)
 api_router.include_router(test.router)
+api_router.include_router(excursion_category.router)

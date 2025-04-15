@@ -37,3 +37,6 @@ from .crud_interest_user import interest_user
 from .crud_event_feedback import event_feedback
 from .crud_promo_order import promo_order
 from .crud_feedback_order import feedback_order
+from .crud_excursion_category import excursion_category
+from .crud_excursion import excursion
+from .crud_excursion_review import excursion_review

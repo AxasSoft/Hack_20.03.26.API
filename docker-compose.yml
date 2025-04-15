@@ -41,7 +41,7 @@ services:
       dockerfile: backend.dockerfile
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
-    command: /start.sh
+    command: /start-reload.sh
     volumes:
       - ./backend/app:/app
     depends_on:

@@ -43,3 +43,6 @@ from .event_feedback import *
 from .interest_user import *
 from .promo_order import *
 from .feedback_order import *
+from .excursion_category import *
+from .excursion import *
+from .excursion_review import *

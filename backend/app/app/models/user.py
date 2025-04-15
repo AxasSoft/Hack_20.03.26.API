@@ -113,3 +113,6 @@ class User(Base):
     views_order = relationship('OrderView', back_populates='user', foreign_keys='OrderView.user_id')
 
     member = relationship('Member', back_populates='user', foreign_keys='Member.user_id', cascade="all, delete-orphan")
+
+    excursion_reviews = relationship("ExcursionReview", back_populates="user")
+    excursions_participant = relationship("ExcursionParticipant", back_populates="user")

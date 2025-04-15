@@ -65,3 +65,11 @@ from .promo_order import *
 from .feedback_order import *
 from .rating_weights import *
 from .order_view import *
+# excursion
+from .excursion import *
+from  .excursion_category import *
+from  .excursion_review import  *
+from  .excursion_group import  *
+from  .excursion_participant import *
+from .excursion_image import *
+from .excursion_category_image import *
