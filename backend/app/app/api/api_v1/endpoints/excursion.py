@@ -41,9 +41,10 @@ def adapt_status(statuses):
 def get_all(
         db: Session = Depends(deps.get_db)
 ):
+    a = crud.excursion.get_multi(db=db, page=None)
     return schemas.ListOfEntityResponse(
         data=[
-            getters.excursion.get_excursion(excursion)
+            getters.excursion.get_excursion(db=db, excursion=excursion)
             for excursion
             in crud.excursion.get_multi(db=db, page=None)[0]
         ]
@@ -153,7 +154,7 @@ def create_excursion(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-    excursion = crud.excursion.creat(db, obj_in=data)
+    excursion = crud.excursion.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(
         data=getters.excursion.get_excursion(excursion=excursion, db=db)

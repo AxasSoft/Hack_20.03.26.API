@@ -1,6 +1,8 @@
 from typing import Optional, Union, Dict, Any, Type, List
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
+import uuid
+import os
 
 from botocore.client import BaseClient
 from app.crud.base import CRUDBase

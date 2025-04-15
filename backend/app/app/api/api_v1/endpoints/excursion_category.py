@@ -65,7 +65,7 @@ def create_category(
     category = crud.excursion_category.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(
-        getters.excursion_category.get_excursion_category(category)
+        data=getters.excursion_category.get_excursion_category(category)
     )
 
 

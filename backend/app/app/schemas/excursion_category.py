@@ -2,20 +2,19 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from .id_model import IdModel
 from .image import GettingImage
+from .id_model import IdModel
 
 
 class CreatingExcursionCategory(BaseModel):
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class UpdatingExcursionCategory(CreatingExcursionCategory):
     name: Optional[str]
 
 
-class GettingExcursionCategory(IdModel):
-    name: str
-    description: Optional[str]
-    # background_image: Optional[GettingImage]
+class GettingExcursionCategory(IdModel, CreatingExcursionCategory):
+    background_image: Optional[GettingImage] = None
+

@@ -44,6 +44,6 @@ class UpdatingExcursion(CreatingExcursion):
 
 class GettingExcursion(IdModel, CreatingExcursion):
     category: Optional[GettingExcursionCategory]
-    images: List[GettingImage]
-    reviews: List[GettingShortExcursionReview]
+    images: Optional[List[GettingImage]] = []
+    reviews: Optional[List[GettingShortExcursionReview]] = []
 

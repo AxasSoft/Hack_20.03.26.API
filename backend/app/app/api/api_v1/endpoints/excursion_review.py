@@ -69,7 +69,7 @@ def create_review(
         ),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
-    excursion_review = crud.excursion_review.creat(db, obj_in=data, user_id=current_user.id, excursion_id=excursion_id)
+    excursion_review = crud.excursion_review.create(db, obj_in=data, user_id=current_user.id, excursion_id=excursion_id)
     return schemas.SingleEntityResponse(
         data=getters.excursion_review.get_excursion_review(excursion_review=excursion_review)
     )

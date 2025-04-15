@@ -6,6 +6,7 @@ from app.utils.datetime import to_unix_timestamp
 from hashlib import md5
 from typing import Optional, List
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect
 import datetime
 from app.utils.datetime import to_unix_timestamp
 
@@ -33,14 +34,13 @@ def get_hash(nums: List[int]) -> str:
 #     )
 
 def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
-    excursion_data = excursion.__dict__
-    excursion_data.pop("category_id")
+    data = {c.key: getattr(excursion, c.key) for c in inspect(excursion).mapper.column_attrs}
     reviews = db.query(ExcursionReview).order_by(ExcursionReview.created.desc()).limit(5).all()
 
 
 
     result = GettingExcursion(
-        **excursion_data,
+        **data,
         category = get_excursion_category(excursion.category),
         images = [
             GettingImage(

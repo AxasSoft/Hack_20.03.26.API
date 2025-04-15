@@ -1,22 +1,21 @@
 from app.models import ExcursionCategory
-from app.schemas import GettingExcursionCategory
+from app.schemas.excursion_category import GettingExcursionCategory
 from app.schemas.image import GettingImage
+from sqlalchemy import inspect
 
 
 def get_excursion_category(excursion_category: ExcursionCategory) -> GettingExcursionCategory:
+    data = {c.key: getattr(excursion_category, c.key) for c in inspect(excursion_category).mapper.column_attrs}
     if excursion_category.background_image:
         first_image = excursion_category.background_image[0]
         background_image = GettingImage(
-            id=first_image.id, link=first_image.image
-        )
+                id=first_image.id, link=first_image.image
+            )
+        print(first_image)
     else:
         background_image = None
-    category_data = {
-        "id": excursion_category.id,
-        "name": excursion_category.name,
-        "description": excursion_category.description,
-        # "background_image": background_image
-    }
-    return GettingExcursionCategory(
-        **category_data
+    result = GettingExcursionCategory(
+        **data,
+        background_image=background_image
     )
+    return result

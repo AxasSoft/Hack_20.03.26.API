@@ -9,7 +9,7 @@ from app.db.base_class import Base
 
 
 class ExcursionReview(Base):
-    review_id = Column(String, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     visit_date = Column(Date, nullable=False)

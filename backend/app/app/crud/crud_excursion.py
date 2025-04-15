@@ -4,13 +4,14 @@ import uuid
 import datetime as dt
 
 from botocore.client import BaseClient
-from sqlalchemy import text, alias, func, or_, and_
+from sqlalchemy import Numeric, text, alias, func, or_, and_, select
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
 
 from app.crud.base import CRUDBase
 from app.models import User, ExcursionParticipant, ExcursionImage
 from app.models.excursion import Excursion
+from app.models.excursion_review import ExcursionReview
 from app.schemas.excursion import CreatingExcursion, UpdatingExcursion
 from app.exceptions import UnprocessableEntity
 from app.utils import pagination
@@ -65,6 +66,24 @@ class CRUDExcursion(CRUDBase[Excursion, CreatingExcursion, UpdatingExcursion]):
 
     def delete_image(self, db: Session, *, image: ExcursionImage) -> None:
         db.delete(image)
+        db.commit()
+
+    def update_rating(self, db: Session, excursion_id: int):
+        excursion = self.get(db, excursion_id)
+        stmt = select(
+            func.round(
+                func.cast(
+                    func.avg(ExcursionReview.rating)
+                    .filter(ExcursionReview.excursion_id == excursion_id)
+                    .filter(ExcursionReview.rating.is_not(None))
+                    .filter(ExcursionReview.rating != 0),
+                    Numeric(2, 1),
+                ),
+                1,
+            )
+        )
+        rate = db.scalar(stmt)
+        excursion.rating = rate
         db.commit()
 
     # def search(
