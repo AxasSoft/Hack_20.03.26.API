@@ -16,5 +16,5 @@ class UpdatingExcursionCategory(CreatingExcursionCategory):
 
 
 class GettingExcursionCategory(IdModel, CreatingExcursionCategory):
-    background_image: Optional[GettingImage] = None
+    background_image: Optional[str] = None
 
