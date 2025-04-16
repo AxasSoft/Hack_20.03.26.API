@@ -41,13 +41,14 @@ def get_reviews(
         raise UnfoundEntity(
             message="Экскурсия не найдена"
         )
-    data,
+    data, paginator = crud.excursion_review.get_by_excursion(db=db, excursion=excursion, page=page)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_review.get_excursion_review(excursion_review)
             for excursion_review
-            in crud.excursion_review.get_by_excursion(db=db, excursion=excursion, page=page)[0]
-        ]
+            in data
+        ],
+        meta=schemas.response.Meta(paginator=paginator)
     )
 
 
