@@ -191,7 +191,7 @@ def get_redis():
     redis_instance = redis.StrictRedis(
         host='85.92.111.28',
         port=6379,
-        password='Ah%\no4{WKi\m(',
+        password=r'Ah%\no4{WKi\m(',
         username='default'
     )
     return redis_instance
