@@ -40,9 +40,10 @@ def adapt_status(statuses):
 )
 def get_all(
         page: Optional[int] = Query(None),
-        db: Session = Depends(deps.get_db)
+        db: Session = Depends(deps.get_db),
+        category_id: int = Path(..., description="Идентификатор категории")
 ):
-    data, paginator = crud.excursion.get_multi(db=db, page=page)
+    data, paginator = crud.excursion.get_by_category(db=db, category_id=category_id, page=page)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion.get_excursion(db=db, excursion=excursion)
@@ -320,7 +321,7 @@ def delete_excursion(
             'description': 'Отказано в доступе'
         },
     },
-    tags=["Панель управления / Экскурсии"]
+    tags=["Административная панель / Экскурсии"]
 )
 def add_image(
         db: Session = Depends(deps.get_db),
@@ -366,7 +367,7 @@ def add_image(
             'description': 'Отказано в доступе'
         },
     },
-    tags=["Панель управления / Экскурсии"]
+    tags=["Административная панель / Экскурсии"]
 )
 def delete_image(
         db: Session = Depends(deps.get_db),

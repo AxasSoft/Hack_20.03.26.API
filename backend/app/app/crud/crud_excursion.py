@@ -69,22 +69,35 @@ class CRUDExcursion(CRUDBase[Excursion, CreatingExcursion, UpdatingExcursion]):
         db.commit()
 
     def update_rating(self, db: Session, excursion_id: int):
-        excursion = self.get(db, excursion_id)
+        excursion = self.get_by_id(db, excursion_id)
         stmt = select(
             func.round(
                 func.cast(
-                    func.avg(ExcursionReview.rating)
-                    .filter(ExcursionReview.excursion_id == excursion_id)
-                    .filter(ExcursionReview.rating.is_not(None))
-                    .filter(ExcursionReview.rating != 0),
-                    Numeric(2, 1),
-                ),
-                1,
-            )
-        )
-        rate = db.scalar(stmt)
-        excursion.rating = rate
+                    func.avg(ExcursionReview.rating),
+                    Numeric(2, 1)
+                ), 1).label("avg_rating"),
+                func.count(ExcursionReview.id).label("total_reviews")
+        ).filter(ExcursionReview.excursion_id == excursion_id,
+                 ExcursionReview.rating.is_not(None),
+                 ExcursionReview.rating != 0
+                 )
+        # rate = db.scalar(stmt)
+        result = db.execute(stmt).fetchone()
+        print(result)
+        print(result.avg_rating)
+
+        excursion.avg_rating = result.avg_rating if result.avg_rating else 0
+        excursion.total_reviews = result.total_reviews if result else 0
         db.commit()
+        db.commit()
+
+
+    def get_by_category(self,
+                         db: Session,
+                         category_id: int,
+                         page: Optional[int] = None):
+        query = db.query(Excursion).filter(Excursion.category_id == category_id).order_by(Excursion.created.desc())
+        return pagination.get_page(query, page)
 
     # def search(
     #         self,

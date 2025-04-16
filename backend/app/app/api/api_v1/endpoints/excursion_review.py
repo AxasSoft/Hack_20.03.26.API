@@ -32,6 +32,7 @@ router = APIRouter()
     tags=["Мобильное приложение / Экскурсии"]
 )
 def get_reviews(
+        page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
@@ -40,24 +41,25 @@ def get_reviews(
         raise UnfoundEntity(
             message="Экскурсия не найдена"
         )
+    data,
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_review.get_excursion_review(excursion_review)
             for excursion_review
-            in crud.excursion_review.get_by_excursion(db=db, excursion=excursion)[0]
+            in crud.excursion_review.get_by_excursion(db=db, excursion=excursion, page=page)[0]
         ]
     )
 
 
 @router.post(
     '/cp/excursions/{excursion_id}/reviews/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionReview],
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Создать отзыв на экскурсию",
     tags=["Административная панель / Экскурсии"]
 )
 @router.post(
     '/excursions/{excursion_id}/reviews/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionReview],
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Создать отзыв на экскурсию",
     tags=["Мобильное приложение / Экскурсии"]
 )
@@ -115,9 +117,9 @@ def create_review(
 
 
 @router.get(
-    '/cp/excursions/{excursion_id}/reviews/{review_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/{review_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
-    name="Получить экскурсию",
+    name="Получить отзыв на экскурсию",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -139,9 +141,9 @@ def create_review(
     tags=["Административная панель / Экскурсии"]
 )
 @router.get(
-    '/excursions/{excursion_id}/reviews/{review_id}/',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/{review_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
-    name="Получить экскурсию",
+    name="Получить отзыв на экскурсию",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -162,7 +164,7 @@ def create_review(
     },
     tags=["Мобильное приложение / Экскурсии"]
 )
-def get_excursion(
+def get_review(
         review_id: int = Path(...),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
@@ -178,9 +180,9 @@ def get_excursion(
 
 
 @router.delete(
-    '/cp/excursions/{excursion_id}/reviews/{review_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/{review_id}/',
     response_model=schemas.OkResponse,
-    name="Удалить экскурсия",
+    name="Удалить отзыв",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -201,7 +203,7 @@ def get_excursion(
     },
     tags=["Административная панель / Экскурсии"]
 )
-def delete_excursion(
+def delete_review(
         review_id: int = Path(...),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
@@ -211,6 +213,7 @@ def delete_excursion(
     if review is None:
         raise UnfoundEntity(message="Отзыв не найден", description="Отзыв не найден",num=1)
     crud.excursion_review.remove(db, id=review_id)
+    crud.excursion.update_rating(db=db, excursion_id=review.excursion_id)
     return schemas.OkResponse()
 
 
