@@ -10,10 +10,6 @@ from app.api import deps
 from app.schemas.response import Meta
 from ....enums.mod_status import ModStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, InaccessibleEntity
-from ....models.excursion_participant import ExcursionParticipant
-from ....notification.notificator import Notificator
-import logging
-
 from app.utils.cache import Cache
 
 router = APIRouter()
@@ -157,7 +153,6 @@ def create_excursion(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-    print(data.description)
     excursion = crud.excursion.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(

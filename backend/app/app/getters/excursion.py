@@ -1,7 +1,8 @@
 from app.getters import get_user_short_info, get_excursion_category
 from app.getters.interest_user import get_interest_user
+from app.getters.excursion_review import get_excursion_review
 from app.models import Excursion, User, ExcursionReview
-from app.schemas import GettingExcursion, GettingImage, GettingShortExcursionReview
+from app.schemas import GettingExcursion, GettingImage, GettingExcursionReview
 from app.utils.datetime import to_unix_timestamp
 from hashlib import md5
 from typing import Optional, List
@@ -35,7 +36,8 @@ def get_hash(nums: List[int]) -> str:
 
 def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
     data = {c.key: getattr(excursion, c.key) for c in inspect(excursion).mapper.column_attrs}
-    reviews = db.query(ExcursionReview).order_by(ExcursionReview.created.desc()).limit(5).all()
+    reviews = db.query(ExcursionReview).filter(ExcursionReview.excursion_id == excursion.id).order_by(ExcursionReview.created.desc()).limit(5).all()
+    print(reviews)
 
 
 
@@ -46,14 +48,6 @@ def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
             image.image
             for image in excursion.images
         ],
-        rewiews = [GettingShortExcursionReview(
-            id=review.id,
-            visit_date=to_unix_timestamp(review.visit_date),
-            description=review.description,
-            rating=review.rating
-        )
-            for review in reviews
-
-        ]
+        reviews = [get_excursion_review(review) for review in reviews]
     )
     return result

@@ -4,6 +4,7 @@ from app.utils.datetime import to_unix_timestamp
 
 
 def get_excursion_review(excursion_review: ExcursionReview) -> GettingExcursionReview:
+    print(excursion_review)
     return GettingExcursionReview(
         id=excursion_review.id,
         created=to_unix_timestamp(excursion_review.created),
@@ -14,5 +15,6 @@ def get_excursion_review(excursion_review: ExcursionReview) -> GettingExcursionR
         user_id=excursion_review.user_id,
         first_name=excursion_review.user.first_name,
         patronymic=excursion_review.user.patronymic,
-        last_name=excursion_review.user.last_name
+        last_name=excursion_review.user.last_name,
+        avatar=excursion_review.user.avatar
     )

@@ -19,9 +19,10 @@ class GettingExcursionReview(IdModel, CreatingExcursionReview):
     created: int
     updated_at: int
     user_id: int
-    first_name: str
-    patronymic: str
-    last_name: str
+    first_name: Optional[str]
+    patronymic: Optional[str]
+    last_name: Optional[str]
+    avatar: Optional[str]
 
 
 class GettingShortExcursionReview(IdModel, CreatingExcursionReview):

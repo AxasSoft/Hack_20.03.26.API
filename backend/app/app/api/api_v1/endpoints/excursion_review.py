@@ -20,13 +20,13 @@ router = APIRouter()
 
 
 @router.get(
-    '/cp/excursions/{excursion_id}/reviews/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionReview],
     name="Получить отзывы на экскурсию",
     tags=["Административная панель / Экскурсии"]
 )
 @router.get(
-    '/excursions/{excursion_id}/reviews/',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionReview],
     name="Получить отзывы на экскурсию",
     tags=["Мобильное приложение / Экскурсии"]
@@ -42,6 +42,7 @@ def get_reviews(
             message="Экскурсия не найдена"
         )
     data, paginator = crud.excursion_review.get_by_excursion(db=db, excursion=excursion, page=page)
+    print(data)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_review.get_excursion_review(excursion_review)
@@ -53,13 +54,13 @@ def get_reviews(
 
 
 @router.post(
-    '/cp/excursions/{excursion_id}/reviews/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Создать отзыв на экскурсию",
     tags=["Административная панель / Экскурсии"]
 )
 @router.post(
-    '/excursions/{excursion_id}/reviews/',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Создать отзыв на экскурсию",
     tags=["Мобильное приложение / Экскурсии"]
@@ -72,6 +73,7 @@ def create_review(
         ),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
+    print("TUT")
     excursion_review = crud.excursion_review.create(db, obj_in=data, user_id=current_user.id, excursion_id=excursion_id)
     return schemas.SingleEntityResponse(
         data=getters.excursion_review.get_excursion_review(excursion_review=excursion_review)

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, validator
 
 # from . import GettingExcursionCategory, GettingExcursionReview
 from .excursion_category import GettingExcursionCategory
-from .excursion_review import GettingShortExcursionReview
+from .excursion_review import GettingExcursionReview
 from .id_model import IdModel
 from .image import GettingImage
 from ..enums.excursion_status import ExcursionStatus
@@ -56,5 +56,5 @@ class UpdatingExcursion(CreatingExcursion):
 class GettingExcursion(IdModel, CreatingExcursion):
     category: Optional[GettingExcursionCategory]
     images: Optional[List[str]] = []
-    reviews: Optional[List[GettingShortExcursionReview]] = []
+    reviews: Optional[List[GettingExcursionReview]]
 
