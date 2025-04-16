@@ -21,7 +21,7 @@ class GettingExcursionReview(IdModel, CreatingExcursionReview):
     user_id: int
     first_name: str
     patronymic: str
-    middle_name: str
+    last_name: str
 
 
 class GettingShortExcursionReview(IdModel, CreatingExcursionReview):

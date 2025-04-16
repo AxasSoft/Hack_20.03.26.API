@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, Query
 from fastapi.params import Path, File
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from botocore.client import BaseClient
 from app import crud, models, schemas, getters
@@ -24,14 +25,17 @@ router = APIRouter()
     tags=['Мобильное приложение / Категории экскурсий'],
 )
 def get_all(
+        page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db)
 ):
+    data, paginator = crud.excursion_category.get_multi(db=db, page=page)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_category.get_excursion_category(category)
             for category
-            in crud.excursion_category.get_multi(db=db, page=None)[0]
-        ]
+            in data
+        ],
+        meta=schemas.response.Meta(paginator=paginator)
     )
 
 

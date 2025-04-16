@@ -27,27 +27,29 @@ def adapt_status(statuses):
 
 
 @router.get(
-    '/cp/excursions/',
+    '/cp/excursion-categories/{category_id}/excursions/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
     name="Получить все доступные экскурсии",
     tags=["Административная панель / Экскурсии"]
 )
 @router.get(
-    '/excursions/',
+    '/excursion-categories/{category_id}/excursions/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
     name="Получить все доступные экскурсии",
     tags=["Мобильное приложение / Экскурсии"]
 )
 def get_all(
+        page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db)
 ):
-    a = crud.excursion.get_multi(db=db, page=None)
+    data, paginator = crud.excursion.get_multi(db=db, page=page)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion.get_excursion(db=db, excursion=excursion)
             for excursion
-            in crud.excursion.get_multi(db=db, page=None)[0]
-        ]
+            in data
+        ],
+        meta=schemas.response.Meta(paginator=paginator)
     )
 # def get_excursions_by_user(
 #         db: Session = Depends(deps.get_db),
@@ -130,7 +132,7 @@ def get_all(
 
 
 @router.post(
-    '/cp/excursions/',
+    '/cp/excursion-categories/{category_id}/excursions/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Добавить экскурсию",
     responses={
@@ -162,7 +164,7 @@ def create_excursion(
 
 
 @router.put(
-    '/cp/excursions/{excursion_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Изменить экскурсию",
     responses={
@@ -201,7 +203,7 @@ def edit_excursion(
 
 
 @router.get(
-    '/cp/excursions/{excursion_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Получить экскурсию",
     responses={
@@ -225,7 +227,7 @@ def edit_excursion(
     tags=["Административная панель / Экскурсии"]
 )
 @router.get(
-    '/excursions/{excursion_id}/',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Получить экскурсию",
     responses={
@@ -264,7 +266,7 @@ def get_excursion(
 
 
 @router.delete(
-    '/cp/excursions/{excursion_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
     response_model=schemas.OkResponse,
     name="Удалить экскурсия",
     responses={
@@ -301,7 +303,7 @@ def delete_excursion(
 
 
 @router.post(
-    '/cp/excursions/{excursion_id}/images/',
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/images/',
     response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
     name="Добавить изображение в экскурсию",
     responses={
@@ -347,7 +349,7 @@ def add_image(
 
 
 @router.delete(
-    '/cp/excursions/images/{image_id}/',
+    '/cp/excursion-categories/{category_id}/excursions/images/{image_id}/',
     response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
     name="Удалить изображение объявления",
     responses={

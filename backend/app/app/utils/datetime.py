@@ -1,12 +1,43 @@
-import datetime
 import logging
 from typing import Optional
 import pytz
+from datetime import date, datetime, time
+from typing import Any
 
 
-def to_unix_timestamp(dt: Optional[datetime.datetime]) -> Optional[int]:
+def adapt_datetime(obj: Any) -> datetime:
+    if isinstance(obj, datetime):
+        dt = obj
+    elif isinstance(obj, time):
+        dt = datetime(
+            year=0,
+            month=0,
+            day=0,
+            hour=obj.hour,
+            minute=obj.minute,
+            second=obj.second,
+            tzinfo=obj.tzinfo,
+        )
+    elif isinstance(obj, date):
+        dt = datetime(
+            year=obj.year, month=obj.month, day=obj.day, hour=0, minute=0, second=0
+        )
+    else:
+        dt = datetime(
+            year=getattr(obj, "year", 0),
+            month=getattr(obj, "month", 0),
+            day=getattr(obj, "day", 0),
+            hour=getattr(obj, "hour", 0),
+            minute=getattr(obj, "minute", 0),
+            second=getattr(obj, "second", 0),
+            tzinfo=getattr(obj, "tzinfo", None),
+        )
+    return dt
+
+def to_unix_timestamp(dt: Any) -> Optional[int]:
     if dt is None:
         return None
+    dt = adapt_datetime(dt)
     return int(dt.timestamp())
 
 
@@ -15,13 +46,13 @@ def from_unix_timestamp(stamp: Optional[int]):
     if stamp is None:
         return None
 
-    return datetime.datetime.fromtimestamp(stamp)
+    return datetime.fromtimestamp(stamp)
 
 
-def humanize_last_visited(dt: Optional[datetime.datetime]):
+def humanize_last_visited(dt: Optional[datetime]):
     if dt is None:
         return None
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     delta = now - dt
     delta_seconds = delta.total_seconds()
     if delta_seconds < 300:
