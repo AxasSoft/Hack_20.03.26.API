@@ -43,10 +43,7 @@ def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
         **data,
         category = get_excursion_category(excursion.category),
         images = [
-            GettingImage(
-                id=image.id,
-                link=image.image
-            )
+            image.image
             for image in excursion.images
         ],
         rewiews = [GettingShortExcursionReview(

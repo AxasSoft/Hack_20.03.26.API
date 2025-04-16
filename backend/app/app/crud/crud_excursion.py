@@ -83,8 +83,6 @@ class CRUDExcursion(CRUDBase[Excursion, CreatingExcursion, UpdatingExcursion]):
                  )
         # rate = db.scalar(stmt)
         result = db.execute(stmt).fetchone()
-        print(result)
-        print(result.avg_rating)
 
         excursion.avg_rating = result.avg_rating if result.avg_rating else 0
         excursion.total_reviews = result.total_reviews if result else 0

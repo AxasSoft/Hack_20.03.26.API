@@ -157,6 +157,7 @@ def create_excursion(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
+    print(data.description)
     excursion = crud.excursion.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(

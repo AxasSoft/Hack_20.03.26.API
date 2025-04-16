@@ -11,8 +11,8 @@ from app.enums.group_status import GroupStatus
 class ExcursionGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     excursion_id = Column(Integer, ForeignKey('excursion.id'), nullable=False)
-    start_datetime = Column(DateTime, nullable=False)
-    end_datetime = Column(DateTime, nullable=False)
+    started = Column(DateTime, nullable=False)
+    ended = Column(DateTime, nullable=False)
     status = Column(ENUM(GroupStatus), nullable=False, default=GroupStatus.AVAILABLE)
     # max_group_size = Column(Integer, nullable=True)
     current_participants = Column(Integer, nullable=False, default=0)

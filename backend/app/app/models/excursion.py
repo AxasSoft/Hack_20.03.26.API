@@ -15,7 +15,7 @@ class Excursion(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     duration = Column(Float, nullable=True)
-    tips = Column(Float, nullable=True)
+    tips = Column(String, nullable=True)
     price = Column(Float, nullable=False)
     current_price = Column(Float, nullable=True)
     max_height = Column(Float, nullable=True)

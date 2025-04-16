@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 # from . import GettingExcursionCategory, GettingExcursionReview
 from .excursion_category import GettingExcursionCategory
@@ -11,11 +11,22 @@ from ..enums.excursion_status import ExcursionStatus
 from ..enums.mod_status import ModStatus
 
 
+class MultilineString(str):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if isinstance(v, str):
+            return v.replace('\r\n', '\n')
+        raise ValueError("Must be a string")
+
 class CreatingExcursion(BaseModel):
     name: str
-    description: Optional[str]
+    description: Optional[MultilineString] = None
     duration: Optional[float]
-    tips: Optional[float]
+    tips: Optional[str]
     price: float
     current_price: Optional[float]
     max_height: Optional[float]
@@ -44,6 +55,6 @@ class UpdatingExcursion(CreatingExcursion):
 
 class GettingExcursion(IdModel, CreatingExcursion):
     category: Optional[GettingExcursionCategory]
-    images: Optional[List[GettingImage]] = []
+    images: Optional[List[str]] = []
     reviews: Optional[List[GettingShortExcursionReview]] = []
 

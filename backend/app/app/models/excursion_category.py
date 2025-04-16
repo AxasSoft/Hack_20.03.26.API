@@ -9,7 +9,7 @@ from app.db.base_class import Base
 
 class ExcursionCategory(Base):
     id = Column(Integer, primary_key=True, index=True, unique=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     description = Column(String, nullable=True)
 
     background_image = relationship("ExcursionCategoryImage", back_populates="excursion_category", cascade="all, delete-orphan")
