@@ -51,7 +51,7 @@ def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
         ],
         rewiews = [GettingShortExcursionReview(
             id=review.id,
-            visit_date=review.visit_date,
+            visit_date=to_unix_timestamp(review.visit_date),
             description=review.description,
             rating=review.rating
         )
