@@ -54,7 +54,8 @@ def from_unix_timestamp(stamp: Optional[int]):
     if stamp is None:
         return None
 
-    return datetime.fromtimestamp(stamp)
+    return datetime.fromtimestamp(stamp,tz=timezone.utc)
+    # return datetime.fromtimestamp(stamp)
 
 
 def humanize_last_visited(dt: Optional[datetime]):

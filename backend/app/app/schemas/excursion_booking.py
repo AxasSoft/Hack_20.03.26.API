@@ -28,3 +28,7 @@ class GettingExcursionBooking(IdModel, BaseModel):
     excursion_name: str
     members: Optional[List[GettingExcursionMember]]
     excursion_images: List[Optional[str]] = []
+
+
+class UpdatingStatusExcursionBooking(BaseModel):
+    status: Optional[ExcursionBookingStatus]

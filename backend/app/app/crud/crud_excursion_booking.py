@@ -31,6 +31,11 @@ class CRUDExcursionBooking(CRUDBase[ExcursionBooking, CreatingExcursionBooking, 
         crud.excursion_member.create_many(db=db, data=members_info, booking_id=db_obj.id, group_id=group_id)
         return db_obj
 
+    def update_status(self, db:Session, status: str, booking: ExcursionBooking):
+        booking.status = status
+        db.commit()
+        db.refresh(booking)
+        return booking
 
 
 excursion_booking = CRUDExcursionBooking(ExcursionBooking)

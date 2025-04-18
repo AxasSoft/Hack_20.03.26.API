@@ -173,7 +173,7 @@ def delete_group(
 @router.post(
     '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
-    name="Создать экскурсионную группу",
+    name="Забронировать экскурсию",
     tags=["Мобильное приложение / Экскурсии"]
 )
 def create_booking(
@@ -192,3 +192,44 @@ def create_booking(
         data=getters.excursion_booking.get_excursion_booking(excursion_booking=new_booking)
     )
 
+
+@router.put(
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking/{booking_id}/status',
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
+    responses={
+            400: {
+                'model': schemas.OkResponse,
+                'description': 'Переданны невалидные данные'
+            },
+            422: {
+                'model': schemas.OkResponse,
+                'description': 'Переданные некорректные данные'
+            },
+            403: {
+                'model': schemas.OkResponse,
+                'description': 'Отказанно в доступе'
+            },
+            404: {
+                'model': schemas.OkResponse,
+                'description': 'Группа не найдена'
+            }
+        },
+    name="Обновить статус бронирования",
+    tags=["Административная панель / Экскурсии"]
+)
+def update_booking_status(
+        data: schemas.UpdatingStatusExcursionBooking,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_superuser),
+        booking_id: int = Path(..., title='Идентификатор бронирования'),
+):
+
+    booking = crud.excursion_booking.get_by_id(db, id=booking_id)
+    if booking is None:
+        raise UnfoundEntity(
+            message="Экскурсия не найдена"
+        )
+    booking = crud.excursion_booking.update_status(db, status=data.status, booking=booking)
+    return schemas.SingleEntityResponse(
+        data=getters.excursion_booking.get_excursion_booking(excursion_booking=booking)
+    )
