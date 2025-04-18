@@ -37,10 +37,6 @@ def get_hash(nums: List[int]) -> str:
 def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
     data = {c.key: getattr(excursion, c.key) for c in inspect(excursion).mapper.column_attrs}
     reviews = db.query(ExcursionReview).filter(ExcursionReview.excursion_id == excursion.id).order_by(ExcursionReview.created.desc()).limit(5).all()
-    print(reviews)
-
-
-
     result = GettingExcursion(
         **data,
         category = get_excursion_category(excursion.category),

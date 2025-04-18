@@ -34,13 +34,15 @@ def get_groups(
         page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
+        date: Optional[int] = Query(None, title="Дата"),
+        members: Optional[int] = Query(None, title="Количество участников")
 ):
     excursion = crud.excursion.get_by_id(db, id=excursion_id)
     if excursion is None:
         raise UnfoundEntity(
             message="Экскурсия не найдена"
         )
-    data, paginator = crud.excursion_group.get_by_excursion(db=db, excursion=excursion, page=page)
+    data, paginator = crud.excursion_group.get_by_excursion(db=db, excursion=excursion, page=page, date=date, members=members)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_group.get_excursion_group(db=db, excursion_group=excursion_group)
@@ -181,6 +183,9 @@ def create_booking(
         group_id: int = Path(..., title='Идентификатор группы'),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
+    # booking_exists = crud.excursion_booking.get_by(db=db, group_id=group_id, user_id=current_user.id)
+    # if booking_exists:
+    #     return schemas.SingleEntityResponse(message="У вас уже есть бронирование на эту группу")
     new_booking = crud.excursion_booking.create_for_user(db, obj_in=data, group_id=group_id, user_id=current_user.id,
                                                          excursion_id=excursion_id)
     return schemas.SingleEntityResponse(

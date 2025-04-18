@@ -1,6 +1,7 @@
 # from botocore.client import BaseClient
 # from fastapi import UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional
 
 from app import crud
@@ -18,11 +19,30 @@ class CRUDExcursionGroup(CRUDBase[ExcursionGroup, CreatingExcursionGroup, Updati
     def get_by_excursion(self,
                          db: Session,
                          excursion: Excursion,
-                         page: Optional[int] = None):
-        query = (db.query(ExcursionGroup).
-                 filter(ExcursionGroup.excursion_id == excursion.id).
-                 filter(ExcursionGroup.status != GroupStatus.FINISHED).
-                 order_by(ExcursionGroup.started.desc()))
+                         date: Optional[int],
+                         members: Optional[int],
+                         page: Optional[int] = None,
+                         ):
+
+        max_members = excursion.max_group_size
+        query = (
+            db.query(ExcursionGroup).
+                 filter(ExcursionGroup.excursion_id == excursion.id)
+                 )
+        if date is not None:
+            print(date)
+            date = from_unix_timestamp(date)
+            print(date)
+            query = query.filter(
+                func.date(ExcursionGroup.started) == func.date(date)
+            )
+
+        if members is not None:
+            query = query.filter(
+                ExcursionGroup.current_members <= (max_members - members)
+            )
+
+        query = query.order_by(ExcursionGroup.started.desc())
         return pagination.get_page(query, page)
 
     def create(self, db: Session, *, obj_in: CreatingExcursionGroup, excursion_id: int) -> ExcursionGroup:

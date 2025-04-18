@@ -4,7 +4,7 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union, Tup
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 
 from app.db.base_class import Base
 from app.schemas.response import Paginator
@@ -99,3 +99,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 db.delete(obj)
             result.append(obj)
         db.commit()
+
+    def get_by(self, db: Session, **kwargs) -> Optional[ModelType]:
+        return (db.scalars(select(self.model).filter_by(**kwargs))).first()
+
+    def get_by_many(self, db: Session, **kwargs) -> Optional[ModelType]:
+        return (db.scalars(select(self.model).filter_by(**kwargs))).all()
+

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas, getters
 from app.api import deps
 from app.schemas.response import Meta
-from ....enums.mod_status import ModStatus
+from ....enums.excursion_booking_status import ExcursionBookingStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, InaccessibleEntity
 from ....notification.notificator import Notificator
 import logging
@@ -72,7 +72,15 @@ def create_review(
         ),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
-    print("TUT")
+    bookings = crud.excursion_booking.get_by_many(db=db, excursion_id=excursion_id, user_id=current_user.id)
+    for booking in bookings:
+        if booking.status == ExcursionBookingStatus.FINISHED:
+            break
+    else:
+        raise UnprocessableEntity('У вас не было завершенных бронирований на эту экскурсию')
+    excursion_review_exists = crud.excursion_review.get_by(excursion_id=excursion_id, ser_id=current_user.id)
+    if excursion_review_exists:
+        return schemas.SingleEntityResponse(message="Вы уже оставляли отзыв на эту экскурсию")
     excursion_review = crud.excursion_review.create(db, obj_in=data, user_id=current_user.id, excursion_id=excursion_id)
     return schemas.SingleEntityResponse(
         data=getters.excursion_review.get_excursion_review(excursion_review=excursion_review)
