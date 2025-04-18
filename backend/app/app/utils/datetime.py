@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 import pytz
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from typing import Any
 
 
@@ -38,7 +38,8 @@ def to_unix_timestamp(dt: Any) -> Optional[int]:
     if dt is None:
         return None
     dt = adapt_datetime(dt)
-    return int(dt.timestamp())
+    # return int(dt.timestamp())
+    return int(datetime(dt.year, dt.month, dt.day, tzinfo=timezone.utc).timestamp())
 
 
 def from_unix_timestamp(stamp: Optional[int]):
