@@ -43,7 +43,7 @@ def get_groups(
     data, paginator = crud.excursion_group.get_by_excursion(db=db, excursion=excursion, page=page)
     return schemas.ListOfEntityResponse(
         data=[
-            getters.excursion_group.get_excursion_group(excursion_group)
+            getters.excursion_group.get_excursion_group(db=db, excursion_group=excursion_group)
             for excursion_group
             in data
         ],
@@ -127,7 +127,7 @@ def get_group(
         raise UnfoundEntity(
             message="Группа не найдена"
         )
-    return schemas.SingleEntityResponse(data=getters.excursion_group.get_excursion_group(excursion_group=group))
+    return schemas.SingleEntityResponse(data=getters.excursion_group.get_excursion_group(db=db, excursion_group=group))
 
 
 
