@@ -10,7 +10,6 @@ from app.api import deps
 from app.schemas.response import Meta
 from ....enums.mod_status import ModStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, InaccessibleEntity
-from ....models.excursion_participant import ExcursionParticipant
 from ....notification.notificator import Notificator
 import logging
 

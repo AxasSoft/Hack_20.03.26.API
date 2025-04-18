@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from fastapi import UploadFile
 
 from app.crud.base import CRUDBase
-from app.models import User, ExcursionParticipant, ExcursionImage
+from app.models import User, ExcursionImage
 from app.models.excursion import Excursion
 from app.models.excursion_review import ExcursionReview
 from app.schemas.excursion import CreatingExcursion, UpdatingExcursion

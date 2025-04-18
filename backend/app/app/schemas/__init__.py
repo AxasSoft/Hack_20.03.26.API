@@ -46,3 +46,6 @@ from .feedback_order import *
 from .excursion_category import *
 from .excursion import *
 from .excursion_review import *
+from .excursion_group import *
+from .excursion_booking import *
+from .excursion_member import *

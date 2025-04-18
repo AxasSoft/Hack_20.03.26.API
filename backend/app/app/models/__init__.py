@@ -70,6 +70,7 @@ from .excursion import *
 from  .excursion_category import *
 from  .excursion_review import  *
 from  .excursion_group import  *
-from  .excursion_participant import *
+from  .excursion_member import *
 from .excursion_image import *
 from .excursion_category_image import *
+from .excursion_booking import *

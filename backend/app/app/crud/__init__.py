@@ -40,3 +40,6 @@ from .crud_feedback_order import feedback_order
 from .crud_excursion_category import excursion_category
 from .crud_excursion import excursion
 from .crud_excursion_review import excursion_review
+from .crud_excursion_booking import excursion_booking
+from .crud_excursion_member import excursion_member
+from .crud_excursion_group import excursion_group
