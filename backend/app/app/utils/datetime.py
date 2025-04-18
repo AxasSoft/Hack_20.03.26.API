@@ -39,7 +39,14 @@ def to_unix_timestamp(dt: Any) -> Optional[int]:
         return None
     dt = adapt_datetime(dt)
     # return int(dt.timestamp())
-    return int(datetime(dt.year, dt.month, dt.day, tzinfo=timezone.utc).timestamp())
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    else:
+        dt = dt.astimezone(timezone.utc)
+
+    return int(dt.timestamp())
+
 
 
 def from_unix_timestamp(stamp: Optional[int]):
