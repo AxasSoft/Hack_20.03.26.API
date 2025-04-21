@@ -34,6 +34,7 @@ def get_reviews(
         page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
+        current_user: models.User = Depends(deps.get_current_active_user),
 ):
     excursion = crud.excursion.get_by_id(db, id=excursion_id)
     if excursion is None:
@@ -41,7 +42,6 @@ def get_reviews(
             message="Экскурсия не найдена"
         )
     data, paginator = crud.excursion_review.get_by_excursion(db=db, excursion=excursion, page=page)
-    print(data)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_review.get_excursion_review(excursion_review)
@@ -78,7 +78,7 @@ def create_review(
             break
     else:
         raise UnprocessableEntity('У вас не было завершенных бронирований на эту экскурсию')
-    excursion_review_exists = crud.excursion_review.get_by(excursion_id=excursion_id, ser_id=current_user.id)
+    excursion_review_exists = crud.excursion_review.get_by(db=db, excursion_id=excursion_id, user_id=current_user.id)
     if excursion_review_exists:
         return schemas.SingleEntityResponse(message="Вы уже оставляли отзыв на эту экскурсию")
     excursion_review = crud.excursion_review.create(db, obj_in=data, user_id=current_user.id, excursion_id=excursion_id)

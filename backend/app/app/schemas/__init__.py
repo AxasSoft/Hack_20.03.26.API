@@ -49,3 +49,5 @@ from .excursion_review import *
 from .excursion_group import *
 from .excursion_booking import *
 from .excursion_member import *
+from .restaurant import *
+from .restaurant_review import *

@@ -74,3 +74,8 @@ from  .excursion_member import *
 from .excursion_image import *
 from .excursion_category_image import *
 from .excursion_booking import *
+# restaurant
+from .restaurant import *
+from .restaurant_image import *
+from .restaurant_phone_number import *
+from .restaurant_review import *

@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas, getters
 from app.api import deps
 from app.schemas.response import Meta
-from ....enums.mod_status import ModStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, InaccessibleEntity
 from app.utils.cache import Cache
 
@@ -16,28 +15,27 @@ router = APIRouter()
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
-    name="Получить все доступные экскурсии",
-    tags=["Административная панель / Экскурсии"]
+    '/cp/restaurants/',
+    response_model=schemas.ListOfEntityResponse[schemas.GettingRestaurant],
+    name="Получить все доступные рестораны",
+    tags=["Административная панель / Рестораны"]
 )
 @router.get(
-    '/excursion-categories/{category_id}/excursions/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
-    name="Получить все доступные экскурсии",
-    tags=["Мобильное приложение / Экскурсии"]
+    '/restaurants/',
+    response_model=schemas.ListOfEntityResponse[schemas.GettingRestaurant],
+    name="Получить все доступные рестораны",
+    tags=["Мобильное приложение / Рестораны"]
 )
 def get_all(
         page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db),
-        category_id: int = Path(..., description="Идентификатор категории"),
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    data, paginator = crud.excursion.get_by_category(db=db, category_id=category_id, page=page)
+    data, paginator = crud.restaurant.get_multi(db=db, page=page)
     return schemas.ListOfEntityResponse(
         data=[
-            getters.excursion.get_excursion(db=db, excursion=excursion)
-            for excursion
+            getters.restaurant.get_restaurant(db=db, restaurant=restaurant)
+            for restaurant
             in data
         ],
         meta=schemas.response.Meta(paginator=paginator)
@@ -45,9 +43,9 @@ def get_all(
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
-    name="Добавить экскурсию",
+    '/cp/restaurants/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingRestaurant],
+    name="Добавить ресторан",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -62,24 +60,24 @@ def get_all(
             'description': 'Отказанно в доступе'
         },
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
-def create_excursion(
-        data: schemas.CreatingExcursion,
+def create_restaurant(
+        data: schemas.CreatingRestaurant,
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-    excursion = crud.excursion.create(db, obj_in=data)
+    restaurant = crud.restaurant.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(
-        data=getters.excursion.get_excursion(excursion=excursion, db=db)
+        data=getters.restaurant.get_restaurant(restaurant=restaurant, db=db)
     )
 
 
 @router.put(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
-    name="Изменить экскурсию",
+    '/cp/restaurants/{restaurant_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingRestaurant],
+    name="Изменить ресторан",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -95,30 +93,30 @@ def create_excursion(
         },
         404: {
             'model': schemas.OkResponse,
-            'description': 'Экскурсия не найдена'
+            'description': 'Ресторан не найден'
         }
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
-def edit_excursion(
-        data: schemas.UpdatingExcursion,
-        excursion_id: int = Path(...),
+def edit_restaurant(
+        data: schemas.UpdatingRestaurant,
+        restaurant_id: int = Path(...),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-    excursion = crud.excursion.get_by_id(db, id=excursion_id)
-    if excursion is None:
+    restaurant = crud.restaurant.get_by_id(db, id=restaurant_id)
+    if restaurant is None:
         raise UnfoundEntity(
-            message="Экскурсия не найдена"
+            message="Ресторан не найден"
         )
-    excursion = crud.excursion.update(db, db_obj=excursion, obj_in=data)
-    return schemas.SingleEntityResponse(data=getters.excursion.get_excursion(db=db, excursion=excursion))
+    restaurant = crud.restaurant.update(db, db_obj=restaurant, obj_in=data)
+    return schemas.SingleEntityResponse(data=getters.restaurant.get_restaurant(db=db, restaurant=restaurant))
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
-    name="Получить экскурсию",
+    '/cp/restaurants/{restaurant_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingRestaurant],
+    name="Получить ресторан",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -134,15 +132,15 @@ def edit_excursion(
         },
         404: {
             'model': schemas.OkResponse,
-            'description': 'Экскурсия не найдена'
+            'description': 'Ресторан не найден'
         }
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
 @router.get(
-    '/excursion-categories/{category_id}/excursions/{excursion_id}/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
-    name="Получить экскурсию",
+    '/restaurants/{restaurant_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingRestaurant],
+    name="Получить ресторан",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -158,30 +156,30 @@ def edit_excursion(
         },
         404: {
             'model': schemas.OkResponse,
-            'description': 'Экскурсия не найдена'
+            'description': 'Ресторан не найден'
         }
     },
-    tags=["Мобильное приложение / Экскурсии"]
+    tags=["Мобильное приложение / Рестораны"]
 )
-def get_excursion(
-        excursion_id: int = Path(...),
+def get_restaurant(
+        restaurant_id: int = Path(...),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    excursion = crud.excursion.get_by_id(db, id=excursion_id)
-    if excursion is None:
+    restaurant = crud.restaurant.get_by_id(db, id=restaurant_id)
+    if restaurant is None:
         raise UnfoundEntity(
-            message="Экскурсия не найдена"
+            message="Ресторан не найден"
         )
-    return schemas.SingleEntityResponse(data=getters.excursion.get_excursion(excursion=excursion, db=db))
+    return schemas.SingleEntityResponse(data=getters.restaurant.get_restaurant(restaurant=restaurant, db=db))
 
 
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
+    '/cp/restaurants/{restaurant_id}/',
     response_model=schemas.OkResponse,
-    name="Удалить экскурсию",
+    name="Удалить ресторан",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -197,28 +195,27 @@ def get_excursion(
         },
         404: {
             'model': schemas.OkResponse,
-            'description': 'ХПользователь не найден'
+            'description': 'Ресторан не найден'
         }
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
-def delete_excursion(
-        excursion_id: int = Path(...),
+def delete_restaurant(
+        restaurant_id: int = Path(...),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
-        cache: Cache = Depends(deps.get_cache_list),
 ):
-    excursion = crud.excursion.get_by_id(db, id=excursion_id)
-    if excursion is None:
-        raise UnfoundEntity(message="Экскурсия не найдена", description="Экскурсия не найдена",num=1)
-    crud.excursion.remove(db, id=excursion_id)
+    restaurant = crud.restaurant.get_by_id(db, id=restaurant_id)
+    if restaurant is None:
+        raise UnfoundEntity(message="Ресторан не найден", description="Ресторан не найден",num=1)
+    crud.restaurant.remove(db, id=restaurant_id)
     return schemas.OkResponse()
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/images/',
-    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
-    name="Добавить изображение в экскурсию",
+    '/cp/restaurants/{restaurant_id}/images/',
+    response_model=schemas.response.SingleEntityResponse[schemas.restaurant.GettingRestaurant],
+    name="Добавить изображение к ресторану",
     responses={
         400: {
             'model': schemas.response.OkResponse,
@@ -233,38 +230,33 @@ def delete_excursion(
             'description': 'Отказано в доступе'
         },
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
 def add_image(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
         image: UploadFile = File(...),
-        num: Optional[int] = Form(...),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
-        excursion_id: int = Path(..., title='Идентификатор экскурсии'),
+        restaurant_id: int = Path(..., title='Идентификатор ресторана'),
         # cache: Cache = Depends(deps.get_cache_list),
 ):
-    # cache.delete_by_prefix('excursion_by_user')
-    excursion = crud.crud_excursion.excursion.get_by_id(db=db, id=excursion_id)
-    if excursion is None:
-        raise UnfoundEntity(num=1, message='Экскурсия не найдена')
+    restaurant = crud.crud_restaurant.restaurant.get_by_id(db=db, id=restaurant_id)
+    if restaurant is None:
+        raise UnfoundEntity(num=1, message='Ресторан не найден')
 
-    crud.crud_excursion.excursion.s3_client = s3_client
-    crud.crud_excursion.excursion.s3_bucket_name = s3_bucket_name
-    crud.crud_excursion.excursion.add_image(db=db, excursion=excursion, image=image, num=num)
-    # excursion.is_accepted = None
-    # db.add(excursion)
-    # db.commit()
+    crud.crud_restaurant.restaurant.s3_client = s3_client
+    crud.crud_restaurant.restaurant.s3_bucket_name = s3_bucket_name
+    crud.crud_restaurant.restaurant.add_image(db=db, restaurant=restaurant, image=image)
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion.get_excursion(excursion=excursion, db=db)
+        data=getters.restaurant.get_restaurant(restaurant=restaurant, db=db)
     )
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/images/{image_id}/',
-    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
-    name="Удалить изображение экскурсии",
+    '/cp/restaurants/images/{image_id}/',
+    response_model=schemas.response.SingleEntityResponse[schemas.restaurant.GettingRestaurant],
+    name="Удалить изображение ресторана",
     responses={
         400: {
             'model': schemas.response.OkResponse,
@@ -279,26 +271,25 @@ def add_image(
             'description': 'Отказано в доступе'
         },
     },
-    tags=["Административная панель / Экскурсии"]
+    tags=["Административная панель / Рестораны"]
 )
 def delete_image(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
-        image_id: int = Path(..., title='Идентификатор экскурсии'),
+        image_id: int = Path(..., title='Идентификатор ресторана'),
         # cache: Cache = Depends(deps.get_cache_list),
 ):
-    # cache.delete_by_prefix('excursion_by_user')
-    excursion_image = crud.crud_excursion.excursion.get_image_by_id(db=db, id=image_id)
-    if excursion_image is None:
+    restaurant_image = crud.crud_restaurant.restaurant.get_image_by_id(db=db, id=image_id)
+    if restaurant_image is None:
         raise UnfoundEntity(num=1, message='Картинка не найдена')
 
     
-    crud.crud_excursion.excursion.s3_client = s3_client
-    crud.crud_excursion.excursion.s3_bucket_name = s3_bucket_name
-    crud.crud_excursion.excursion.delete_image(db=db, image=excursion_image)
+    crud.crud_restaurant.restaurant.s3_client = s3_client
+    crud.crud_restaurant.restaurant.s3_bucket_name = s3_bucket_name
+    crud.crud_restaurant.restaurant.delete_image(db=db, image=restaurant_image)
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion.get_excursion(db=db, excursion=excursion_image.excursion)
+        data=getters.restaurant.get_restaurant(db=db, restaurant=restaurant_image.restaurant)
     )
 

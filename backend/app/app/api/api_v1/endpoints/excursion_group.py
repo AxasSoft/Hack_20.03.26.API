@@ -35,7 +35,8 @@ def get_groups(
         db: Session = Depends(deps.get_db),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
         date: Optional[int] = Query(None, title="Дата"),
-        members: Optional[int] = Query(None, title="Количество участников")
+        members: Optional[int] = Query(None, title="Количество участников"),
+        current_user: models.User = Depends(deps.get_current_active_user),
 ):
     excursion = crud.excursion.get_by_id(db, id=excursion_id)
     if excursion is None:

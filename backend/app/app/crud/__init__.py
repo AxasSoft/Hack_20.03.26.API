@@ -43,3 +43,5 @@ from .crud_excursion_review import excursion_review
 from .crud_excursion_booking import excursion_booking
 from .crud_excursion_member import excursion_member
 from .crud_excursion_group import excursion_group
+from .crud_restaurant import restaurant
+from .crud_restaurant_review import restaurant_review

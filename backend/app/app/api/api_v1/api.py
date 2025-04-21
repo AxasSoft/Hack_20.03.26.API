@@ -47,6 +47,8 @@ from app.api.api_v1.endpoints import (
     excursion,
     excursion_review,
     excursion_group,
+    restaurant,
+    restaurant_review,
 )
 
 # from otter_mini.endpoints import router as chat_router
@@ -98,3 +100,5 @@ api_router.include_router(excursion_category.router)
 api_router.include_router(excursion.router)
 api_router.include_router(excursion_review.router)
 api_router.include_router(excursion_group.router)
+api_router.include_router(restaurant.router)
+api_router.include_router(restaurant_review.router)

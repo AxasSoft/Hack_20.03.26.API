@@ -114,5 +114,6 @@ class User(Base):
 
     member = relationship('Member', back_populates='user', foreign_keys='Member.user_id', cascade="all, delete-orphan")
 
-    excursion_reviews = relationship("ExcursionReview", back_populates="user")
+    excursion_reviews = relationship("ExcursionReview", back_populates="user", cascade="all, delete-orphan")
+    restaurant_reviews = relationship("RestaurantReview", back_populates="user", cascade="all, delete-orphan")
     excursion_bookings = relationship("ExcursionBooking", back_populates="user", cascade="all, delete-orphan")
