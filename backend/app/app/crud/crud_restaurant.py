@@ -12,7 +12,8 @@ from app.crud.base import CRUDBase
 from app.models import User, RestaurantImage
 from app.models.restaurant import Restaurant
 from app.models.restaurant_review import RestaurantReview
-from app.schemas.restaurant import CreatingRestaurant, UpdatingRestaurant
+from app.models.restaurant_phone_number import RestaurantPhoneNumber
+from app.schemas.restaurant import CreatingRestaurant, UpdatingRestaurant, GettingRestaurant
 from app.exceptions import UnprocessableEntity
 from app.utils import pagination
 from app.utils.datetime import from_unix_timestamp
@@ -86,6 +87,16 @@ class CRUDRestaurant(CRUDBase[Restaurant, CreatingRestaurant, UpdatingRestaurant
         restaurant.avg_rating = result.avg_rating if result.avg_rating else 0
         restaurant.total_reviews = result.total_reviews if result else 0
         db.commit()
+
+
+    def add_phone_numbers(self, db: Session, *, restaurant: Restaurant, number: str) -> Restaurant:
+        phone_numbers = RestaurantPhoneNumber(phone_number=number, restaurant_id=restaurant.id)
+        db.add(phone_numbers)
+        db.commit()
+        db.refresh(phone_numbers)
+        db.refresh(restaurant)
+
+        return restaurant
 
 
 

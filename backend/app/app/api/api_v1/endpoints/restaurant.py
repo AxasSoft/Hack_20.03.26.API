@@ -293,3 +293,41 @@ def delete_image(
         data=getters.restaurant.get_restaurant(db=db, restaurant=restaurant_image.restaurant)
     )
 
+
+@router.post(
+    '/cp/restaurants/{restaurant_id}/phone_numbers',
+    response_model=schemas.SingleEntityResponse[schemas.GettingRestaurant],
+    name="Добавить ресторану номер телефона",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Ресторан не найден'
+        }
+    },
+    tags=["Административная панель / Рестораны"]
+)
+def add_restaurant_phone_numbers(
+        number: str,
+        restaurant_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_superuser),
+):
+    restaurant = crud.restaurant.get_by_id(db, id=restaurant_id)
+    if restaurant is None:
+        raise UnfoundEntity(
+            message="Ресторан не найден"
+        )
+    restaurant = crud.restaurant.add_phone_numbers(db=db, restaurant=restaurant, number=number)
+    return schemas.SingleEntityResponse(data=getters.restaurant.get_restaurant(db=db, restaurant=restaurant))
