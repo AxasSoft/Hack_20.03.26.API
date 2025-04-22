@@ -1050,12 +1050,15 @@ def delete_image(
         image_id: int = Path(..., title='Идентификатор объявления'),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    cache.delete_by_prefix('order_by_user')
-    key_tuple = ('order_by_id', f"ads_id - {ads_id}")
-    cache.delete(key_tuple)
     order_image = crud.crud_order.order.get_image_by_id(db=db, id=image_id)
     if order_image is None:
         raise UnfoundEntity(num=1, message='Картинка не найдена')
+
+    order = order_image.order
+
+    cache.delete_by_prefix('order_by_user')
+    key_tuple = ('order_by_id', f"order_id - {order.id}")
+    cache.delete(key_tuple)
 
     crud.crud_order.order.s3_client = s3_client
     crud.crud_order.order.s3_bucket_name = s3_bucket_name
