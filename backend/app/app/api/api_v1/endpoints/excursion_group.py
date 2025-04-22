@@ -133,8 +133,6 @@ def get_group(
     return schemas.SingleEntityResponse(data=getters.excursion_group.get_excursion_group(db=db, excursion_group=group))
 
 
-
-
 @router.delete(
     '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/',
     response_model=schemas.OkResponse,
@@ -171,8 +169,9 @@ def delete_group(
     crud.excursion_group.remove(db, id=group_id)
     return schemas.OkResponse()
 
+
 @router.post(
-    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
     name="Забронировать экскурсию",
     tags=["Мобильное приложение / Экскурсии"]
@@ -195,7 +194,7 @@ def create_booking(
 
 
 @router.put(
-    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking/{booking_id}/status',
+    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking/{booking_id}/status/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
     responses={
             400: {
@@ -228,9 +227,32 @@ def update_booking_status(
     booking = crud.excursion_booking.get_by_id(db, id=booking_id)
     if booking is None:
         raise UnfoundEntity(
-            message="Экскурсия не найдена"
+            message="Бронироапние не найдено"
         )
     booking = crud.excursion_booking.update_status(db, status=data.status, booking=booking)
     return schemas.SingleEntityResponse(
         data=getters.excursion_booking.get_excursion_booking(excursion_booking=booking)
+    )
+
+
+@router.put(
+    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/status/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionGroup],
+    name="Обновить статус экскурсионной группы",
+    tags=["Административная панель / Экскурсии"]
+)
+def create_booking(
+        data: schemas.UpdatingStatusExcursionGroup,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_superuser),
+        group_id: int = Path(..., title='Идентификатор группы'),
+        excursion_id: int = Path(..., title='Идентификатор экскурсии'),
+):
+    group = crud.excursion_group.get_by_id(db, id=group_id)
+    if group is None:
+        raise UnfoundEntity(message="Группа не найдена", description="Группа не найдена", num=1)
+    group = crud.excursion_group.update_status(db, status=data.status, group=group)
+
+    return schemas.SingleEntityResponse(
+        data=getters.excursion_group.get_excursion_group(db=db, excursion_group=group)
     )

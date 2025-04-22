@@ -15,4 +15,14 @@ class CreatingTransferRequest(BaseModel):
     animal: bool = False
     ski_supplies: bool = False
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "type": "economy",
+                "passengers_quantity": 2,
+                "ski_supplies": True,
+            },
+            "description": f"Статусы: {', '.join([f'{e.value} ({e.description})' for e in TransferType])}"
+        }
+
 

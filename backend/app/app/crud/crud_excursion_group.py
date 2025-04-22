@@ -67,6 +67,12 @@ class CRUDExcursionGroup(CRUDBase[ExcursionGroup, CreatingExcursionGroup, Updati
             db_obj.status = GroupStatus.COMPLETED
         db.commit()
 
+    def update_status(self, db:Session, status: str, group: ExcursionGroup):
+        group.status = status
+        db.commit()
+        db.refresh(group)
+        return group
+
 
 
 

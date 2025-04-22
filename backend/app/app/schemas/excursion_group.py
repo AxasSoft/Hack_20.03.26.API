@@ -23,3 +23,6 @@ class GettingExcursionGroup(IdModel, CreatingExcursionGroup):
     available_for_booking: int
     current_members: int
     members: List[GettingExcursionMember]
+
+class UpdatingStatusExcursionGroup(BaseModel):
+    status: Optional[GroupStatus]
