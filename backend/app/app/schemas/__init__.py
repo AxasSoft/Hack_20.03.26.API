@@ -51,3 +51,4 @@ from .excursion_booking import *
 from .excursion_member import *
 from .restaurant import *
 from .restaurant_review import *
+from .transfer import *

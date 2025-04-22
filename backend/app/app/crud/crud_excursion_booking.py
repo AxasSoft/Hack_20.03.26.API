@@ -8,6 +8,7 @@ from app.crud.base import CRUDBase
 from app.models import ExcursionBooking, Excursion
 from app.schemas import CreatingExcursionBooking, UpdatingExcursionBooking
 from app.utils.datetime import from_unix_timestamp
+from ..exceptions import UnprocessableEntity
 from app.utils import pagination
 from app.enums.excursion_booking_status import ExcursionBookingStatus
 
@@ -24,6 +25,10 @@ class CRUDExcursionBooking(CRUDBase[ExcursionBooking, CreatingExcursionBooking, 
                         ) -> ExcursionBooking:
         booking_data = obj_in.dict()
         members_info = booking_data.pop('members_info')
+        excursion = crud.excursion.get_by_id(db=db, id=excursion_id)
+        group = crud.excursion_group.get_by_id(db=db, id=group_id)
+        if len(members_info) >= excursion.max_group_size - group.current_members:
+            raise UnprocessableEntity('Не хватает свободных мест в группе')
         db_obj = self.model(**booking_data, user_id=user_id, group_id=group_id, excursion_id=excursion_id)
         db.add(db_obj)
         db.commit()

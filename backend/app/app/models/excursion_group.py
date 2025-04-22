@@ -13,6 +13,7 @@ class ExcursionGroup(Base):
     ended = Column(DateTime, nullable=True)
     status = Column(ENUM(GroupStatus), nullable=False, default=GroupStatus.AVAILABLE)
     current_members = Column(Integer, nullable=False, default=0)
+    max_group_size = Column(Integer, nullable=True)
 
     excursion = relationship("Excursion", back_populates="excursion_groups")
     bookings = relationship("ExcursionBooking", back_populates="excursion_group", cascade="all, delete-orphan")

@@ -68,5 +68,16 @@ class Settings(BaseSettings):
     REDIS_URL: str
     CACHE_TTL: int
 
+    SMTP_TLS: bool = True
+    SMTP_PORT: int = 587
+    SMTP_HOST: Optional[str] = None
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM_EMAIL: Optional[str] = None
+    EMAILS_FROM_NAME: Optional[str] = None
+
+    # dev test
+    SUPERUSER_EMAIL: List[str] = ["s.pashov@axas.ru"]
+
 
 settings = Settings()
