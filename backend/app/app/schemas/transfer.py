@@ -14,6 +14,7 @@ class CreatingTransferRequest(BaseModel):
     child_seat: bool = False
     animal: bool = False
     ski_supplies: bool = False
+    comment: str = False
 
     class Config:
         schema_extra = {

@@ -49,6 +49,8 @@ def transfer_request(
         email_body += "<h3>Необходим провоз животных</h3>"
     if data.ski_supplies:
         email_body += "<h3>Необходим провоз горнолыжного снаряжения</h3>"
+    if data.comment:
+        email_body += f"<h3>Комментарий: {data.comment}</h3>"
     send_result = email_sender.send_email(
         "Заявка на трансфер",
         email_body
