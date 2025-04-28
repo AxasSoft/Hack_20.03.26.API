@@ -14,8 +14,7 @@ router = APIRouter()
 
 
 @router.post(
-    '/'
-    '.transfer/',
+    '/transfer/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionCategory],
     name="Создать заявку на трансфер",
     responses={
@@ -42,8 +41,10 @@ def transfer_request(
     email_sender = SmtpEmailSender()
     email_body = f"""
 <h3>Заявка на трансфер от:</h3>
-<h3>{current_user.first_name} {current_user.patronymic} {current_user.last_name}</h3>
-<h3>{tel}</h3><br>
+<h3>{current_user.first_name if current_user.first_name else ''} 
+{current_user.patronymic if current_user.patronymic else ''} 
+{current_user.last_name if current_user.last_name else ''}</h3>
+<h3>Телефон: {current_user.tel if current_user.tel else ''}</h3><br>
 <h3>Тип машины: {data.type.description }</h3>
 <h3>Количество пассажиров: {data.passengers_quantity}</h3>
 """

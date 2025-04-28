@@ -22,6 +22,7 @@ class CreatingTransferRequest(BaseModel):
                 "type": "economy",
                 "passengers_quantity": 2,
                 "ski_supplies": True,
+                "comment": "comment",
             },
             "description": f"Статусы: {', '.join([f'{e.value} ({e.description})' for e in TransferType])}"
         }
