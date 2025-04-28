@@ -79,8 +79,8 @@ class Settings(BaseSettings):
     # dev test
     SUPERUSER_EMAIL: List[str] = ["s.pashov@axas.ru", "tour@soktur.ru", "d.pavlenko@axas.ru", "a.ozerov@axas.ru"]
 
-    ETG_KEY_ID: str
-    ETG_API_KEY: str
+    # ETG_KEY_ID: str
+    # ETG_API_KEY: str
 
 
 settings = Settings()
