@@ -723,6 +723,12 @@ class CRUDUser(CRUDBase[User, CreatingUser, UpdatingUser]):
     def create(self, db: Session, *, obj_in: CreatingUser) -> User:
         obj_in_data = obj_in.dict(exclude_unset=True)
         interests = obj_in_data.pop("interests")
+        if 'gender' in obj_in_data and obj_in_data['gender'] is not None:
+            obj_in_data['gender'] = Gender(obj_in_data['gender'])
+        if 'birthtime' in obj_in_data and obj_in_data['birthtime'] is not None:
+            obj_in_data['birthtime'] = from_unix_timestamp(obj_in_data['birthtime'])
+        obj_in_data['is_editor'] = obj_in_data.get('is_editor', False)
+        obj_in_data['is_support'] = obj_in_data.get('is_support', False)
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         db.commit()
@@ -977,19 +983,5 @@ class CRUDUser(CRUDBase[User, CreatingUser, UpdatingUser]):
         )
         # return [s.subject for s in user.object_subscriptions if s.subject.deleted == None]
         return pagination.get_page(query, page)
-    
-    def create(self, db: Session, *, obj_in: CreatingUser) -> User:
-        obj_in_data = jsonable_encoder(obj_in)
-        if 'gender' in obj_in_data and obj_in_data['gender'] is not None:
-            obj_in_data['gender'] = Gender(obj_in_data['gender'])
-        if 'birthtime' in obj_in_data and obj_in_data['birthtime'] is not None:
-            obj_in_data['birthtime'] = from_unix_timestamp(obj_in_data['birthtime'])
-        obj_in_data['is_editor'] = obj_in_data.get('is_editor', False)
-        obj_in_data['is_support'] = obj_in_data.get('is_support', False)
-        db_obj = self.model(**obj_in_data)  # type: ignore
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
 
 user = CRUDUser(User)
