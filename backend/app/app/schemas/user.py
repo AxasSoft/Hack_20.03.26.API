@@ -272,7 +272,7 @@ class CreatingUser(BaseModel):
         description="0 - Мужской  \n 1 - Женский  \n 2 - предпочитаю не отвечать  \n",
     )
     location: Optional[str]
-    category_id: Optional[int]
+    category_id: Optional[int] = None
     tg: Optional[str]
     is_servicer: Optional[bool] = Field(False)
     is_business: bool = Field(False)
@@ -288,4 +288,4 @@ class CreatingUser(BaseModel):
     is_dating_profile: Optional[bool] = Field(False)
     is_editor: Optional[bool]
     is_support: Optional[bool]
-    interests: Optional[List[int]]
+    interests: Optional[List[int]] = None
