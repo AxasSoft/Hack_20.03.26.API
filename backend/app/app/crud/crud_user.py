@@ -722,7 +722,7 @@ class CRUDUser(CRUDBase[User, CreatingUser, UpdatingUser]):
 
     def create(self, db: Session, *, obj_in: CreatingUser) -> User:
         obj_in_data = obj_in.dict(exclude_unset=True)
-        interests = obj_in_data.pop["interests"]
+        interests = obj_in_data.pop("interests")
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         db.commit()
