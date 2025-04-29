@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Union, Type, List, Tuple
 import requests
 from botocore.client import BaseClient
 from dateutil.relativedelta import relativedelta
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 from fastapi.encoders import jsonable_encoder
 from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy import cast, String, or_, not_, desc, select, func, and_, text
@@ -38,7 +38,8 @@ from app.schemas.response import Paginator
 from app.schemas.user import UpdatingUser, UpdatingUserByAdmin, CreatingPushNotification, \
     GettingStat, ByCategorySchema, CreatingUser, Gender
 from ..exceptions import UnprocessableEntity
-from ..models import UserBlock, PushNotification, WhiteTel, BlackTel, Notification, Order, Story, Info, Subscription
+from ..models import UserBlock, PushNotification, WhiteTel, BlackTel, Notification, Order, Story, Info, Subscription, \
+UserInterest, Interest
 from ..notification.notificator import Notificator
 from ..utils import pagination, security
 from ..utils.datetime import from_unix_timestamp
@@ -720,11 +721,25 @@ class CRUDUser(CRUDBase[User, CreatingUser, UpdatingUser]):
         return security.create_access_token(subject=user.id)
 
     def create(self, db: Session, *, obj_in: CreatingUser) -> User:
-        obj_in_data = jsonable_encoder(obj_in)
+        obj_in_data = obj_in.dict(exclude_unset=True)
+        interests = obj_in_data.pop["interests"]
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
+        if interests:
+            db.query(UserInterest).filter(UserInterest.user_id == db_obj.id).delete()
+            existing_ids = {
+                i.id for i in db.query(Interest.id).filter(Interest.id.in_(interests)).all()
+            }
+            missing = set(interests) - existing_ids
+            if missing:
+                raise HTTPException(404, f"Interests not found: {missing}")
+
+            for interest_id in interests:
+                db.add(UserInterest(user_id=user.id, interest_id=interest_id))
+            db.commit()
+            db.refresh(db_obj)
         return db_obj
 
     def update(
