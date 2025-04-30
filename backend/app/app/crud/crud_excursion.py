@@ -9,11 +9,12 @@ from sqlalchemy.orm import Session
 from fastapi import UploadFile
 
 from app.crud.base import CRUDBase
+from app import crud
 from app.models import User, ExcursionImage
 from app.models.excursion import Excursion
 from app.models.excursion_review import ExcursionReview
 from app.schemas.excursion import CreatingExcursion, UpdatingExcursion
-from app.exceptions import UnprocessableEntity
+from app.exceptions import UnprocessableEntity, UnfoundEntity
 from app.utils import pagination
 from app.utils.datetime import from_unix_timestamp
 
@@ -92,9 +93,17 @@ class CRUDExcursion(CRUDBase[Excursion, CreatingExcursion, UpdatingExcursion]):
 
     def get_by_category(self,
                          db: Session,
-                         category_id: int,
+                         category_id: Optional[int] = None,
                          page: Optional[int] = None):
-        query = db.query(Excursion).filter(Excursion.category_id == category_id).order_by(Excursion.created.desc())
+        if category_id:
+            category = crud.excursion_category.get_by_id(db, id=category_id)
+            if category is None:
+                raise UnfoundEntity(
+                    message="Категория не найдена"
+                )
+            query = db.query(Excursion).filter(Excursion.category_id == category_id).order_by(Excursion.created.desc())
+        else:
+            query = db.query(Excursion).order_by(Excursion.created.desc())
         return pagination.get_page(query, page)
 
     # def search(
