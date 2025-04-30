@@ -22,7 +22,7 @@ class CreatingRestaurant(BaseModel):
     name: str
     description: Optional[MultilineString] = None
     address: str
-    two_gis_url: str
+    two_gis_url: Optional[str] = None
     loyalty_program: bool = False
     max_price: Optional[float] = None
     min_price: Optional[float] = None

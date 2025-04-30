@@ -15,7 +15,7 @@ class Restaurant(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     address = Column(String, nullable=False)
-    two_gis_url = Column(String, nullable=False)
+    two_gis_url = Column(String, nullable=True)
     loyalty_program = Column(Boolean, nullable=False, default=False)
     max_price = Column(Float, nullable=True)
     min_price = Column(Float, nullable=True)
