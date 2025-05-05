@@ -229,8 +229,9 @@ def edit_info(
         info_id: int = Path(..., description="Идентификатор информационного блока"),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    key_tuple_user = ('info_by', f"info_id - {info_id}")
-    cache.delete(key_tuple_user)
+    # key_tuple_user = ('info_by', f"info_id - {info_id}")
+    # cache.delete(key_tuple_user)
+    cache.delete_by_prefix('info_by')
     info = crud.info.get_by_id(db, info_id)
     if info is None:
         raise UnfoundEntity(
