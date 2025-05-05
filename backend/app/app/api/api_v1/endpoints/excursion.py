@@ -21,8 +21,25 @@ router = APIRouter()
     name="Получить все доступные экскурсии",
     tags=["Административная панель / Экскурсии"]
 )
+def get_all(
+        page: Optional[int] = Query(None),
+        db: Session = Depends(deps.get_db),
+        category_id: Optional[int] = Query(None, title="Иденитификатор категории"),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    data, paginator = crud.excursion.get_by_category(db=db, category_id=category_id, page=page)
+    return schemas.ListOfEntityResponse(
+        data=[
+            getters.excursion.get_excursion(db=db, excursion=excursion)
+            for excursion
+            in data
+        ],
+        meta=schemas.response.Meta(paginator=paginator)
+    )
+
+
 @router.get(
-    '/excursions/',
+    '/excursion-categories/{category_id}/excursions/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
     name="Получить все доступные экскурсии",
     tags=["Мобильное приложение / Экскурсии"]
@@ -30,7 +47,7 @@ router = APIRouter()
 def get_all(
         page: Optional[int] = Query(None),
         db: Session = Depends(deps.get_db),
-        category_id: Optional[int] = Query(None, title="Иденитификатор категории"),
+        category_id: int = Path(..., description="Идентификатор категории"),
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
     data, paginator = crud.excursion.get_by_category(db=db, category_id=category_id, page=page)
