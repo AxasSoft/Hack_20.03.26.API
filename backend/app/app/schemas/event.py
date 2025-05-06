@@ -88,13 +88,13 @@ class GettingEvent(IdModel, BaseModel):
     started: int
     ended: Optional[int]
     period: Optional[str]
-    is_private: bool
+    is_private: Optional[bool]
     # price: int = Field(0)
     # start_link: Optional[str]
     # report_link: Optional[str]
     place: Optional[str]
-    lat: float
-    lon: float
+    lat: Optional[float]
+    lon: Optional[float]
     age: Optional[int]
     user: GettingUserShortInfo
     members: List[GettingEventMember]
