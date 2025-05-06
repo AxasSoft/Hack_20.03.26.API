@@ -20,6 +20,9 @@ class Member(Base):
     ended = Column(DateTime(), nullable=True, index=True)
     started = Column(DateTime(), nullable=True, index=True)
 
+    is_blocker = Column(Boolean, nullable=True)
+    is_blocked = Column(Boolean, nullable=True)
+
     first_message = relationship('Message', foreign_keys=[first_message_id])
     last_message = relationship("Message", foreign_keys=[last_message_id])
     user = relationship('User', foreign_keys=[user_id], back_populates='member')

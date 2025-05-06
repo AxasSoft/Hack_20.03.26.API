@@ -10,7 +10,7 @@ from app.api import deps
 from app.notification.notificator import Notificator
 from app.schemas.response import Meta
 from botocore.client import BaseClient
-from fastapi import APIRouter, Depends, Query, UploadFile, WebSocket, Header, HTTPException
+from fastapi import APIRouter, Depends, Query, UploadFile, WebSocket, Header, HTTPException, Body
 from fastapi.params import Path, File, Form
 from redis import Redis
 from sqlalchemy.orm import Session
@@ -766,3 +766,48 @@ def get_chats_coutn(
         logging.info("From the database")
 
     return data
+
+
+@router.put(
+    '/users/{user_id}/chats/blocking/',
+    response_model=schemas.SingleEntityResponse[GettingChat],
+    name="Заблокировать/разблокировать пользователя",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        }
+    },
+    tags=["Мобильное приложение / Чаты"]
+)
+def chat_blocking(
+        blocking: bool = Body(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_user),
+        s3_client: BaseClient = Depends(deps.get_s3_client),
+        s3_bucket_name: str = Depends(deps.get_bucket_name),
+        user_id: int = Path(..., title="Идентификатор пользователя, с которым необходимо начать или продолжить диалог"),
+        # type_chat: conint(ge=0, le=2) = Query(..., title="Тип Чата"),
+        cache: Cache = Depends(deps.get_cache_sing),
+):
+    user = crud.user.get_by_id(db=db, id=user_id)
+    if user is None:
+        raise UnfoundEntity('Собеседник не найден')
+    crud_chat = CrudChat(s3_client=s3_client, s3_bucket_name=s3_bucket_name)
+    chat, created = crud_chat.init_chat(db=db, initiator=current_user, recipient=user,
+                                        # type_chat=type_chat
+                                        )
+    chat = crud_chat.block_user(db=db, current_user=current_user, second_user=user, chat=chat, blocking=blocking)
+    cache.delete_by_prefix('chat_by_user')
+
+    return schemas.SingleEntityResponse(
+        data=get_chat(db=db, chat=chat, current_user=current_user)
+    )

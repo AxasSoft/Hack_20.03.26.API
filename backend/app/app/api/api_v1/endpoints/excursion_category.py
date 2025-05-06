@@ -29,7 +29,6 @@ def get_all(
         db: Session = Depends(deps.get_db)
 ):
     data, paginator = crud.excursion_category.get_multi(db=db, page=page)
-    print(data)
     return schemas.ListOfEntityResponse(
         data=[
             getters.excursion_category.get_excursion_category(db=db, excursion_category=category)

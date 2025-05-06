@@ -36,6 +36,8 @@ class GettingChat(IdModel, BaseModel):
     quantity_messages: Optional[int]
     user: GettingUserShortInfo
     last_message: Optional[GettingMessage]
+    is_blocked: bool
+    is_blocker: bool
 
 
 class OrderBy(enum.Enum):

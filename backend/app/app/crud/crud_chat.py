@@ -15,6 +15,7 @@ from app.models.user import User
 
 from ..models import Chat, Member, Message, DeletedMessage, Attachment
 from ..schemas import SendingMessage, OrderBy
+from ..exceptions import InaccessibleEntity
 
 
 
@@ -482,6 +483,10 @@ class CrudChat:
             .first()
         if member is None:
             return None
+        if member.is_blocker:
+            raise InaccessibleEntity('Вы заблокировали этого пользователя')
+        if member.is_blocked:
+            raise InaccessibleEntity('Пользователь вас заблокировал')
 
         db_message = Message()
         db_message.sender = member
@@ -518,4 +523,37 @@ class CrudChat:
             message.is_read = True
             db.add(message)
         db.commit()
+
+    def block_user(self, db: Session, current_user: User, chat: Chat, second_user: User, blocking: bool):
+        current_member = db.query(Member)\
+            .filter(
+                Member.user_id == current_user.id,
+                or_(Member.initiated_chat == chat, Member.received_chat == chat)
+            )\
+            .first()
+        second_member = db.query(Member)\
+            .filter(
+                Member.user_id == second_user.id,
+                or_(Member.initiated_chat == chat, Member.received_chat == chat)
+            )\
+            .first()
+        if blocking:
+            if current_member.is_blocker and second_member.is_blocked:
+                return chat
+
+            else:
+                current_member.is_blocker = True
+                second_member.is_blocked = True
+        else:
+            if not current_member.is_blocker and not second_member.is_blocked:
+                return chat
+
+            else:
+                current_member.is_blocker = False
+                second_member.is_blocked = False
+
+        db.commit()
+        db.refresh(chat)
+        return chat
+
 

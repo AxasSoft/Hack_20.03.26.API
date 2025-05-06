@@ -101,7 +101,9 @@ def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
                 db=db,
                 message=last_message,
                 current_user=current_user
-            ) if last_message is not None else None
+            ) if last_message is not None else None,
+            is_blocked = current_member.is_blocked if current_member.is_blocked else False,
+            is_blocker = current_member.is_blocker if current_member.is_blocked else False
         )
 
     if result.type_chat is not None:
