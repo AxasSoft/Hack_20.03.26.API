@@ -39,7 +39,7 @@ def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
     reviews = db.query(ExcursionReview).filter(ExcursionReview.excursion_id == excursion.id).order_by(ExcursionReview.created.desc()).limit(5).all()
     result = GettingExcursion(
         **data,
-        category = get_excursion_category(excursion.category),
+        category = get_excursion_category(db=db, excursion_category=excursion.category),
         images = [
             image.image
             for image in excursion.images

@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any, Type, List
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from fastapi import UploadFile
 import uuid
 import os
@@ -24,6 +25,11 @@ class CRUDExcursionCategory(CRUDBase[ExcursionCategory, CreatingExcursionCategor
     def get_image_by_id(self, db: Session, id: Any):
         return db.query(ExcursionCategoryImage).filter(ExcursionCategoryImage.id == id).first()
 
+    def get_last_image(self, db: Session, excursion_category: ExcursionCategory):
+        return (db.query(ExcursionCategoryImage).
+                filter(ExcursionCategoryImage.excursion_category_id == excursion_category.id).
+                order_by(desc(ExcursionCategoryImage.id)).first())
+
     def add_image(self, db: Session, *, excursion_category: ExcursionCategory, image: UploadFile) -> Optional[ExcursionCategoryImage]:
 
         host = self.s3_client._endpoint.host
@@ -45,6 +51,12 @@ class CRUDExcursionCategory(CRUDBase[ExcursionCategory, CreatingExcursionCategor
 
         if not (200 <= result.get('ResponseMetadata', {}).get('HTTPStatusCode', 500) < 300):
             return None
+
+        if excursion_category.background_image:
+            old_image = self.get_last_image(db=db, excursion_category=excursion_category)
+            db.delete(old_image)
+            db.commit()
+
 
         image = ExcursionCategoryImage()
         image.excursion_category = excursion_category

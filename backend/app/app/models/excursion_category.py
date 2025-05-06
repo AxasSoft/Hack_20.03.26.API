@@ -13,5 +13,5 @@ class ExcursionCategory(Base):
     description = Column(String, nullable=True)
 
     background_image = relationship("ExcursionCategoryImage", back_populates="excursion_category", cascade="all, delete-orphan")
-    excursions = relationship("Excursion", back_populates="category")
+    excursions = relationship("Excursion", back_populates="category", cascade="all, delete-orphan")
 

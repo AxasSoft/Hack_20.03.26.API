@@ -29,9 +29,10 @@ def get_all(
         db: Session = Depends(deps.get_db)
 ):
     data, paginator = crud.excursion_category.get_multi(db=db, page=page)
+    print(data)
     return schemas.ListOfEntityResponse(
         data=[
-            getters.excursion_category.get_excursion_category(category)
+            getters.excursion_category.get_excursion_category(db=db, excursion_category=category)
             for category
             in data
         ],
@@ -69,7 +70,7 @@ def create_category(
     category = crud.excursion_category.create(db, obj_in=data)
 
     return schemas.SingleEntityResponse(
-        data=getters.excursion_category.get_excursion_category(category)
+        data=getters.excursion_category.get_excursion_category(db=db, excursion_category=category)
     )
 
 
@@ -113,7 +114,7 @@ def edit_category(
     category = crud.excursion_category.update(db, db_obj=category, obj_in=data)
 
     return schemas.SingleEntityResponse(
-        data=getters.excursion_category.get_excursion_category(category)
+        data=getters.excursion_category.get_excursion_category(db=db, excursion_category=category)
     )
 
 
@@ -198,7 +199,7 @@ def add_image(
     # db.add(event)
     # db.commit()
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion_category.get_excursion_category(excursion_category)
+        data=getters.excursion_category.get_excursion_category(db=db, excursion_category=excursion_category)
     )
 
 @router.delete(
@@ -235,5 +236,5 @@ def delete_image(
     crud.crud_excursion_category.excursion_category.s3_bucket_name = s3_bucket_name
     crud.crud_excursion_category.excursion_category.delete_image(db=db, image=excursion_category_image)
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion_category.get_excursion_category(excursion_category_image.excursion_category)
+        data=getters.excursion_category.get_excursion_category(db=db, excursion_category=excursion_category_image.excursion_category)
     )
