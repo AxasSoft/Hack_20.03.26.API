@@ -196,22 +196,25 @@ def create_promo(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-   
+    link = "geogesh://"
     if data.order_id is not None:
         product = crud.order.get_by_id(db, data.order_id)
         if product is None:
             raise UnfoundEntity(message="Продукта не найдена")
+        link += f'ads?id={data.order_id}'
     if data.subcategory_id is not None:
         sub_categ = crud.crud_subcategory.subcategory.get_by_id(db=db, id=data.subcategory_id)
         if sub_categ is None:
-            raise UnfoundEntity(message="Подкатегория не найдена")    
+            raise UnfoundEntity(message="Подкатегория не найдена")
+        link += f'subcategory?id={data.subcategory_id}'
     if data.info_id is not None:
         info = crud.crud_info.info.get_by_id(db=db, id=data.info_id)
         if info is None:
-            raise UnfoundEntity(message="Информационного блока не найдено")    
+            raise UnfoundEntity(message="Информационного блока не найдено")
+        link += f'info?id={data.info_id}'
 
     promo = crud.crud_promo_order.promo_order.create(
-        db=db, obj_in=data
+        db=db, obj_in=data, link=link
     )
 
     return schemas.response.SingleEntityResponse(

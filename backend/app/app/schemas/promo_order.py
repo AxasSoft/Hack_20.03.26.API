@@ -12,7 +12,7 @@ from app.schemas.subcategory import GettingSubcategory
 
 
 class CreatingPromoOrder(BaseModel):
-    link: Optional[str] = None
+    # link: Optional[str] = None
     order_id: Optional[int] = None
     subcategory_id: Optional[int] = None
     info_id: Optional[int] = None
