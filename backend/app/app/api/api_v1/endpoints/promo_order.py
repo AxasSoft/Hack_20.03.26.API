@@ -270,7 +270,7 @@ def edit_promo(
     if promo is None:
         raise UnfoundEntity(message="Промо не найден", num=1)
 
-    promo = crud.crud_promo_order.promo_order.update(db=db, db_obj=promo, obj_in=data)
+    promo = crud.crud_promo_order.promo_order.update(db=db, db_obj=promo, obj_in=data.dict())
 
     return schemas.response.SingleEntityResponse(
          data=getters.promo_order.get_promo_order(db=db, db_obj=promo)
