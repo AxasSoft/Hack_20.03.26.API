@@ -344,6 +344,8 @@ class CRUDEvent(CRUDBase[Event, CreatingEvent, UpdatingEvent]):
                 )
         if 'members' in update_data:
             member_ids = update_data.pop('members')
+        else:
+            member_ids = []
         update_data['is_draft'] = bool(update_data.get('is_draft'))
 
         for field in dir(db_obj):
