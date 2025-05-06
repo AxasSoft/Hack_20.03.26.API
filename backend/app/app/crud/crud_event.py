@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict, Any, Type, List
+ёfrom typing import Optional, Union, Dict, Any, Type, List
 import os
 import uuid
 import datetime as dt
@@ -342,7 +342,8 @@ class CRUDEvent(CRUDBase[Event, CreatingEvent, UpdatingEvent]):
                 raise HTTPException(
                 status_code=404, detail="Категория не найдена"
                 )
-        member_ids = update_data.pop('members')
+        if 'members' in update_data:
+            member_ids = update_data.pop('members')
         update_data['is_draft'] = bool(update_data.get('is_draft'))
 
         for field in dir(db_obj):
