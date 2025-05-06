@@ -45,3 +45,4 @@ from .crud_excursion_member import excursion_member
 from .crud_excursion_group import excursion_group
 from .crud_restaurant import restaurant
 from .crud_restaurant_review import restaurant_review
+from .crud_transfer import transfer

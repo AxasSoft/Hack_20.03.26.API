@@ -79,3 +79,5 @@ from .restaurant import *
 from .restaurant_image import *
 from .restaurant_phone_number import *
 from .restaurant_review import *
+
+from .transfer import *

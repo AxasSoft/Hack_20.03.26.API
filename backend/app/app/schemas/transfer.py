@@ -6,6 +6,7 @@ from .excursion_category import GettingExcursionCategory
 from .excursion_review import GettingExcursionReview
 from .id_model import IdModel
 from ..enums.transfer_type import TransferType
+from . import GettingUserShortInfo
 
 
 class CreatingTransferRequest(BaseModel):
@@ -28,3 +29,10 @@ class CreatingTransferRequest(BaseModel):
         }
 
 
+class GettingTransfer(IdModel, CreatingTransferRequest):
+    created: int
+    user_id: int
+    first_name: Optional[str]
+    patronymic: Optional[str]
+    last_name: Optional[str]
+    tel: Optional[str]
