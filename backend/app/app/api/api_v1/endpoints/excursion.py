@@ -62,7 +62,7 @@ def get_all(
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/',
+    '/cp/excursions/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Добавить экскурсию",
     responses={
@@ -94,7 +94,7 @@ def create_excursion(
 
 
 @router.put(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
+    '/cp/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Изменить экскурсию",
     responses={
@@ -133,7 +133,7 @@ def edit_excursion(
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
+    '/cp/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
     name="Получить экскурсию",
     responses={
@@ -196,7 +196,7 @@ def get_excursion(
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/',
+    '/cp/excursions/{excursion_id}/',
     response_model=schemas.OkResponse,
     name="Удалить экскурсию",
     responses={
@@ -233,7 +233,7 @@ def delete_excursion(
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/images/',
+    '/cp/excursions/{excursion_id}/images/',
     response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
     name="Добавить изображение в экскурсию",
     responses={
@@ -279,7 +279,7 @@ def add_image(
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/images/{image_id}/',
+    '/cp/excursions/images/{image_id}/',
     response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
     name="Удалить изображение экскурсии",
     responses={

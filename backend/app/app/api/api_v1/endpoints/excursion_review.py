@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
+    '/cp/excursions/{excursion_id}/reviews/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionReview],
     name="Получить отзывы на экскурсию",
     tags=["Административная панель / Экскурсии"]
@@ -53,7 +53,7 @@ def get_reviews(
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/',
+    '/cp/excursions/{excursion_id}/reviews/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Создать отзыв на экскурсию",
     tags=["Административная панель / Экскурсии"]
@@ -127,7 +127,7 @@ def create_review(
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/{review_id}/',
+    '/cp/excursions/reviews/{review_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionReview],
     name="Получить отзыв на экскурсию",
     responses={
@@ -190,7 +190,7 @@ def get_review(
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/reviews/{review_id}/',
+    '/cp/excursions/reviews/{review_id}/',
     response_model=schemas.OkResponse,
     name="Удалить отзыв",
     responses={

@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/',
+    '/cp/excursions/{excursion_id}/groups/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionGroup],
     name="Получить экскурсионные группы",
     tags=["Административная панель / Экскурсии"]
@@ -55,7 +55,7 @@ def get_groups(
 
 
 @router.post(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/',
+    '/cp/excursions/{excursion_id}/groups/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionGroup],
     name="Создать экскурсионную группу",
     tags=["Административная панель / Экскурсии"]
@@ -73,7 +73,7 @@ def create_group(
 
 
 @router.get(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/',
+    '/cp/excursions/groups/{group_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionGroup],
     name="Получить экскурсионную группу",
     responses={
@@ -134,7 +134,7 @@ def get_group(
 
 
 @router.delete(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/',
+    '/cp/excursions/groups/{group_id}/',
     response_model=schemas.OkResponse,
     name="Удалить экскурсионную группу",
     responses={
@@ -227,7 +227,7 @@ def update_booking_status(
     booking = crud.excursion_booking.get_by_id(db, id=booking_id)
     if booking is None:
         raise UnfoundEntity(
-            message="Бронироапние не найдено"
+            message="Бронирование не найдено"
         )
     booking = crud.excursion_booking.update_status(db, status=data.status, booking=booking)
     return schemas.SingleEntityResponse(
@@ -236,7 +236,7 @@ def update_booking_status(
 
 
 @router.put(
-    '/cp/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/status/',
+    '/cp/excursions/groups/{group_id}/status/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionGroup],
     name="Обновить статус экскурсионной группы",
     tags=["Административная панель / Экскурсии"]
