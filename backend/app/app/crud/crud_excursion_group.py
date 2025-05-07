@@ -30,9 +30,7 @@ class CRUDExcursionGroup(CRUDBase[ExcursionGroup, CreatingExcursionGroup, Updati
                  filter(ExcursionGroup.excursion_id == excursion.id)
                  )
         if date is not None:
-            print(date)
             date = from_unix_timestamp(date)
-            print(date)
             query = query.filter(
                 func.date(ExcursionGroup.started) == func.date(date)
             )

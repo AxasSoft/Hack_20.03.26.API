@@ -12,8 +12,7 @@ def get_excursion_group(db: Session,excursion_group: ExcursionGroup) -> GettingE
         query = db.query(ExcursionMember).filter(ExcursionMember.excursion_group_id == excursion_group.id)
         members = query.all()
         return members
-    print(excursion_group.started)
-    print(to_unix_timestamp(excursion_group.started))
+
 
     members_data = [] if excursion_group.current_members == 0 else get_members(db=db, excursion_group=excursion_group)
     return GettingExcursionGroup(
