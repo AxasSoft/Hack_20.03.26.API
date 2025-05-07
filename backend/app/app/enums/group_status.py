@@ -1,6 +1,6 @@
 import enum
 
-class GroupStatus(enum.Enum):
+class GroupStatus(str, enum.Enum):
     AVAILABLE = "available"
     COMPLETED = "completed"
     FINISHED = "finished"
