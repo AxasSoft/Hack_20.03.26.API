@@ -194,7 +194,7 @@ def create_booking(
 
 
 @router.put(
-    '/excursion-categories/{category_id}/excursions/{excursion_id}/groups/{group_id}/booking/{booking_id}/status/',
+    '/cp/excursions/bookings/{booking_id}/status/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
     responses={
             400: {
