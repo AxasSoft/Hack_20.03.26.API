@@ -26,6 +26,7 @@ class CreatingExcursion(BaseModel):
     name: str
     description: Optional[MultilineString] = None
     duration: Optional[float]
+    address: Optional[str]
     tips: Optional[str]
     price: float
     current_price: Optional[float]

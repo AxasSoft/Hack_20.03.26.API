@@ -14,6 +14,7 @@ class Excursion(Base):
     created = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    address = Column(String, nullable=True)
     duration = Column(Float, nullable=True)
     tips = Column(String, nullable=True)
     price = Column(Float, nullable=False)
