@@ -214,21 +214,23 @@ def create_booking(
                 'description': 'Группа не найдена'
             }
         },
-    name="Обновить статус бронирования",
-    tags=["Административная панель / Экскурсии"]
+    name="Обновить статус бронирования экскурсии",
+    tags=["Административная панель / Бронирования"]
 )
 def update_booking_status(
         data: schemas.UpdatingStatusExcursionBooking,
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
         booking_id: int = Path(..., title='Идентификатор бронирования'),
+        cache: Cache = Depends(deps.get_cache_list),
 ):
-
+    cache.delete_by_prefix('excursion_booking_by_user')
     booking = crud.excursion_booking.get_by_id(db, id=booking_id)
     if booking is None:
         raise UnfoundEntity(
             message="Бронирование не найдено"
         )
+
     booking = crud.excursion_booking.update_status(db, status=data.status, booking=booking)
     return schemas.SingleEntityResponse(
         data=getters.excursion_booking.get_excursion_booking(excursion_booking=booking)

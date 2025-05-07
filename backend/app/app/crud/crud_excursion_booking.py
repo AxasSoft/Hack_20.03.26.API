@@ -5,7 +5,7 @@ from typing import Optional
 
 from app import crud
 from app.crud.base import CRUDBase
-from app.models import ExcursionBooking, Excursion
+from app.models import ExcursionBooking, Excursion, User
 from app.schemas import CreatingExcursionBooking, UpdatingExcursionBooking
 from app.utils.datetime import from_unix_timestamp
 from ..exceptions import UnprocessableEntity
@@ -41,6 +41,18 @@ class CRUDExcursionBooking(CRUDBase[ExcursionBooking, CreatingExcursionBooking, 
         db.commit()
         db.refresh(booking)
         return booking
+
+    def get_bookings_by_user(self,
+                             db: Session,
+                             user: User,
+                             page: Optional[int] = None
+                             ):
+        query = (
+            db.query(ExcursionBooking).
+            filter(ExcursionBooking.user_id == user.id)
+        ).order_by(ExcursionBooking.created.desc())
+
+        return pagination.get_page(query, page)
 
 
 excursion_booking = CRUDExcursionBooking(ExcursionBooking)
