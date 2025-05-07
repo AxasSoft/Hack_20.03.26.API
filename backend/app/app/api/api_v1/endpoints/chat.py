@@ -795,16 +795,14 @@ def chat_blocking(
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
         user_id: int = Path(..., title="Идентификатор пользователя, с которым необходимо начать или продолжить диалог"),
-        # type_chat: conint(ge=0, le=2) = Query(..., title="Тип Чата"),
+        type_chat: conint(ge=0, le=2) = Query(..., title="Тип Чата"),
         cache: Cache = Depends(deps.get_cache_sing),
 ):
     user = crud.user.get_by_id(db=db, id=user_id)
     if user is None:
         raise UnfoundEntity('Собеседник не найден')
     crud_chat = CrudChat(s3_client=s3_client, s3_bucket_name=s3_bucket_name)
-    chat, created = crud_chat.init_chat(db=db, initiator=current_user, recipient=user,
-                                        # type_chat=type_chat
-                                        )
+    chat, created = crud_chat.init_chat(db=db, initiator=current_user, recipient=user, type_chat=type_chat)
     chat = crud_chat.block_user(db=db, current_user=current_user, second_user=user, chat=chat, blocking=blocking)
     cache.delete_by_prefix('chat_by_user')
 
