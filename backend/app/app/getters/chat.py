@@ -57,10 +57,6 @@ def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
         current_member = initiator
         second_member = recipient
 
-    print(current_member)
-    print(current_member.is_blocker)
-    print(current_member.is_blocked)
-
     last_message = current_member.last_message
     if last_message is None:
         delete_before_id = current_member.delete_before_id
@@ -107,7 +103,7 @@ def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
                 current_user=current_user
             ) if last_message is not None else None,
             is_blocked = current_member.is_blocked if current_member.is_blocked else False,
-            is_blocker = current_member.is_blocker if current_member.is_blocked else False
+            is_blocker = current_member.is_blocker if current_member.is_blocker else False
         )
 
     if result.type_chat is not None:
