@@ -204,3 +204,36 @@ def cancel_excursion_booking(
     excursion_booking = crud.excursion_booking.update_status(db, status=ExcursionBookingStatus.REJECTED, booking=excursion_booking)
     cache.delete_by_prefix('excursion_booking_by_user')
     return schemas.SingleEntityResponse(data=getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
+
+
+@router.put(
+    '/users/clean_cache/',
+    # response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
+    name="Чистка кэша мероприятия",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Бронирование не найдено'
+        }
+    },
+    tags=["Чистка кэша"]
+)
+def cancel_excursion_booking(
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+        cache: Cache = Depends(deps.get_cache_list),
+):
+    cache.delete_by_prefix('event_by_user')
+    return None
