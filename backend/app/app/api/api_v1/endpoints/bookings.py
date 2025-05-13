@@ -57,7 +57,7 @@ def get_excursion_bookings_by_user(
             page=page)
         
         return schemas.ListOfEntityResponse(
-            data=[getters.booking.get_excursion_booking(excursion_booking=booking) for booking in data],
+            data=[getters.excursion_booking.get_excursion_booking(excursion_booking=booking) for booking in data],
             meta=Meta(paginator=paginator)
             )
     
