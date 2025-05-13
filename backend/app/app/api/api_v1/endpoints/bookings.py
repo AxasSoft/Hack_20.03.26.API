@@ -9,8 +9,8 @@ from starlette.requests import Request
 from app import crud, models, schemas, getters
 from app.api import deps
 from app.schemas.response import Meta, OkResponse
+from app.enums.excursion_booking_status import ExcursionBookingStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, ListOfEntityError, InaccessibleEntity
-from ....schemas import CreatingStory, UpdatingStory
 import logging
 
 
@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.get(
     '/users/me/bookings/excursions/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionBooking],
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
     name="Получить бронирования экскурсий текущего пользователя",
     responses={
         400: {
@@ -127,3 +127,80 @@ def get_excursion_bookings_by_user(
         logging.info("From the database")
 
     return data
+
+
+@router.get(
+    '/users/me/bookings/excursions/{excursion_booking_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
+    name="Получить бронирование",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Бронирование не найдено'
+        }
+    },
+    tags=["Мобильное приложение / Бронирования"]
+)
+def get_excursion_booking_by_id(
+        excursion_booking_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    excursion_booking = crud.excursion_booking.get_by_id(db, id=excursion_booking_id)
+    if excursion_booking is None:
+        raise UnfoundEntity(
+            message="Бронирование экскурсии не найдено"
+        )
+    return schemas.SingleEntityResponse(getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
+
+
+@router.put(
+    '/users/me/bookings/excursions/{excursion_booking_id}/cancel/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
+    name="Отменить бронирование",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Бронирование не найдено'
+        }
+    },
+    tags=["Мобильное приложение / Бронирования"]
+)
+def cancel_excursion_booking(
+        excursion_booking_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+        cache: Cache = Depends(deps.get_cache_list),
+):
+    excursion_booking = crud.excursion_booking.get_by_id(db, id=excursion_booking_id)
+    if excursion_booking is None:
+        raise UnfoundEntity(
+            message="Бронирование экскурсии не найдено"
+        )
+    excursion_booking = crud.excursion_booking.update_status(db, status=ExcursionBookingStatus.REJECTED, booking=excursion_booking)
+    cache.delete_by_prefix('excursion_booking_by_user')
+    return schemas.SingleEntityResponse(getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))

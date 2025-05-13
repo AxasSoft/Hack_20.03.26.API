@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas, getters
 from app.api import deps
 from app.schemas.response import Meta
-from ....enums.mod_status import ModStatus
+from app.enums.group_status import GroupStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, InaccessibleEntity
 from ....notification.notificator import Notificator
 import logging

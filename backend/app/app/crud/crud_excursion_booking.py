@@ -37,6 +37,12 @@ class CRUDExcursionBooking(CRUDBase[ExcursionBooking, CreatingExcursionBooking, 
         return db_obj
 
     def update_status(self, db:Session, status: str, booking: ExcursionBooking):
+        if status == ExcursionBookingStatus.REJECTED:
+            members_count = 0
+            for excursion_member in booking.members:
+                db.delete(excursion_member)
+                members_count += 1
+            crud.excursion_group.update_members_count(db=db, group_id=booking.group_id, members_count=-members_count)
         booking.status = status
         db.commit()
         db.refresh(booking)
