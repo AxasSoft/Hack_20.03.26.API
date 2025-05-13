@@ -163,7 +163,7 @@ def get_excursion_booking_by_id(
         raise UnfoundEntity(
             message="Бронирование экскурсии не найдено"
         )
-    return schemas.SingleEntityResponse(getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
+    return schemas.SingleEntityResponse(data=getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
 
 
 @router.put(
@@ -203,4 +203,4 @@ def cancel_excursion_booking(
         )
     excursion_booking = crud.excursion_booking.update_status(db, status=ExcursionBookingStatus.REJECTED, booking=excursion_booking)
     cache.delete_by_prefix('excursion_booking_by_user')
-    return schemas.SingleEntityResponse(getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
+    return schemas.SingleEntityResponse(data=getters.excursion_booking.get_excursion_booking(excursion_booking=excursion_booking))
