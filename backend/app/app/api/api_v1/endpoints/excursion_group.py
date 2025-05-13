@@ -250,7 +250,6 @@ def create_booking(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
         group_id: int = Path(..., title='Идентификатор группы'),
-        excursion_id: int = Path(..., title='Идентификатор экскурсии'),
 ):
     group = crud.excursion_group.get_by_id(db, id=group_id)
     if group is None:
