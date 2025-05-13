@@ -182,12 +182,14 @@ def create_booking(
         current_user: models.User = Depends(deps.get_current_active_user),
         group_id: int = Path(..., title='Идентификатор группы'),
         excursion_id: int = Path(..., title='Идентификатор экскурсии'),
+        cache: Cache = Depends(deps.get_cache_list),
 ):
     # booking_exists = crud.excursion_booking.get_by(db=db, group_id=group_id, user_id=current_user.id)
     # if booking_exists:
     #     return schemas.SingleEntityResponse(message="У вас уже есть бронирование на эту группу")
     new_booking = crud.excursion_booking.create_for_user(db, obj_in=data, group_id=group_id, user_id=current_user.id,
                                                          excursion_id=excursion_id)
+    cache.delete_by_prefix('excursion_booking_by_user')
     return schemas.SingleEntityResponse(
         data=getters.excursion_booking.get_excursion_booking(excursion_booking=new_booking)
     )
