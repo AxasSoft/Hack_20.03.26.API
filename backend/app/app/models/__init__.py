@@ -81,3 +81,4 @@ from .restaurant_phone_number import *
 from .restaurant_review import *
 
 from .transfer import *
+from .snowmobile_booking import *

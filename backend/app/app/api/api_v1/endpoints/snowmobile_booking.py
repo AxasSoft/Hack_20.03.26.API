@@ -14,9 +14,9 @@ router = APIRouter()
 
 
 @router.post(
-    '/transfer/',
+    '/snowmobiles/',
     response_model=schemas.SingleEntityResponse,
-    name="Создать заявку на трансфер",
+    name="Создать заявку на бронирование снегохода",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -33,22 +33,22 @@ router = APIRouter()
     },
     tags=["Мобильное приложение / Трансфер и Бронирование снегохода"]
 )
-def transfer_request(
-        data: schemas.CreatingTransferRequest,
+def snowmobiles_request(
+        data: schemas.CreatingSnowmobileBooking,
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    crud.transfer.create(db, obj_in=data, user_id=current_user.id)
-    crud.transfer.send_email(data=data, user=current_user)
+    crud.snowmobile_booking.create(db, obj_in=data, user_id=current_user.id)
+    crud.snowmobile_booking.send_email(data=data, user=current_user)
     return schemas.SingleEntityResponse(
         message="Ok"
     )
 
 
 @router.get(
-    '/cp/transfers/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingTransfer],
-    name="Список трансферов",
+    '/cp/snowmobiles/',
+    response_model=schemas.ListOfEntityResponse[schemas.GettingSnowmobileBooking],
+    name="Список заявок на бронирование снегоходов",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -70,14 +70,14 @@ def get_all(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
-    data, paginator = crud.transfer.get_page(
+    data, paginator = crud.snowmobile_booking.get_page(
         db=db,
         page=page
     )
     return schemas.response.ListOfEntityResponse(
         data=[
-            getters.transfer.get_transfer(transfer=transfer)
-            for transfer
+            getters.snowmobile_booking.get_snowmobile_booking(snowmobile_booking=snowmobile_booking)
+            for snowmobile_booking
             in data
         ],
         meta=schemas.response.Meta(paginator=paginator)

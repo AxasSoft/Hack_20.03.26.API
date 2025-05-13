@@ -119,3 +119,4 @@ class User(Base):
     excursion_bookings = relationship("ExcursionBooking", back_populates="user", cascade="all, delete-orphan")
 
     transfers = relationship("Transfer", back_populates="user", cascade="all, delete-orphan")
+    snowmobile_bookings = relationship("SnowmobileBooking", back_populates="user", cascade="all, delete-orphan")
