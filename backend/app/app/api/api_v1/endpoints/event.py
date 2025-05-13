@@ -95,7 +95,7 @@ def get_events_by_user(
             price_from=price_from,
             price_to=price_to,
             place=place,
-            for_su=False,
+            for_su=True,  # Для получения всех мероприятий пользователем
             creator_id=creator_id,
             is_open=is_open,
             interests=interests,
