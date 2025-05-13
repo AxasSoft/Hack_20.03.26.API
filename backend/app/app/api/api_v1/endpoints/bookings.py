@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.get(
     '/users/me/bookings/excursions/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursionBooking],
+    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionBooking],
     name="Получить бронирования экскурсий текущего пользователя",
     responses={
         400: {
