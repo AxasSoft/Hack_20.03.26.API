@@ -51,7 +51,8 @@ from app.api.api_v1.endpoints import (
     restaurant_review,
     transfer,
     bookings,
-    snowmobile_booking
+    snowmobile_booking,
+    hotel,
 )
 
 # from otter_mini.endpoints import router as chat_router
@@ -108,3 +109,4 @@ api_router.include_router(restaurant_review.router)
 api_router.include_router(transfer.router)
 api_router.include_router(bookings.router)
 api_router.include_router(snowmobile_booking.router)
+api_router.include_router(hotel.router)
