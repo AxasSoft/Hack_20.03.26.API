@@ -23,14 +23,20 @@ router = APIRouter()
 
 @router.get(
     '/cp/hotels/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingExcursionGroup],
+    response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
     name="Поиск отеля",
+    description="""параметр guest: 2 - число взрослых /
+'2and10.14' - двое взрослых и двое детей 10 и 14 лет /
+'2-3and7' - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 10 лет""",
     tags=["Административная панель / Отели"]
 )
 @router.get(
     '/hotels/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
     name="Поиск отеля",
+    description="""параметр guest: 2 - число взрослых /
+'2and10.14' - двое взрослых и двое детей 10 и 14 лет /
+'2-3and7' - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 10 лет""",
     tags=["Мобильное приложение / Отели"]
 )
 def get_groups(
