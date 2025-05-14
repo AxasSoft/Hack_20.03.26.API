@@ -9,26 +9,20 @@ import os
 from app.core.config import settings
 from app.utils.security import generate_random_password
 from app.exceptions import UnprocessableEntity
-from app.schemas.hotel import RoomGuests
+from app.schemas.hotel import RoomGuests, GettingHotelSearchInfo
 from app.utils.datetime import from_unix_timestamp
 from app.utils.pagination import get_page_no_db
 
 from app.core.config import settings
 
 DUMP_PATH = "geogesh_hotels.json"
-from pydantic import BaseModel
-class GettingHotelSearchInfo(BaseModel):
-    hid: Optional[str]
-    meal_included: Optional[bool]
-    card_payment: Optional[bool]
-    free_cancellation: Optional[bool]
-    room_name: Optional[str]
-    rate: Optional[float]
-    currency: Optional[str]
-    image: Optional[str]
-    address: Optional[str]
-    name: Optional[str]
-    image: Optional[str]
+BASE_COMFORT = {
+    "Трансфер": "transfer",
+    "Парковка": "parking",
+    "Животные": "animals",
+    "Интернет": "internet",
+    "Бассейн и пляж": "pool"
+}
 
 class ETGOstrovokManager:
     KEY_ID = 12427
@@ -133,14 +127,20 @@ class ETGOstrovokManager:
                         obj.address = hotel_data.get("address")
                         obj.name = hotel_data.get("name")
                         obj.image = hotel_data.get("images")[0]
+
+                        hotel_comfort = []
+                        for amenity_group in hotel_data.get("amenity_groups"):
+                            if amenity_group.get("group_name") in BASE_COMFORT:
+                                hotel_comfort.append(BASE_COMFORT[amenity_group.get("group_name")])
+                        obj.comfort = hotel_comfort
+
+
+
+
         except Exception as e:
             print(e)
 
         data, paginator = get_page_no_db(list(hotels_getting_data.values()), page)
-
-        print(data)
-        print()
-        print(paginator)
 
         return data, paginator
 

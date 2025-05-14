@@ -1,4 +1,5 @@
 from typing import Optional, List
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
@@ -15,6 +16,14 @@ class SimpleSearchCriteria(BaseModel):
     checkout: int
     guests: Optional[List[RoomGuests]]
 
+class ComfortEnum(str, Enum):
+    PARKING = "parking"
+    INTERNET = "internet"
+    POOL = "pool"
+    TRANSFER = "transfer"
+    ANIMALS = "animals"
+
+
 
 class GettingHotelSearchInfo(BaseModel):
     hid: Optional[str]
@@ -28,3 +37,5 @@ class GettingHotelSearchInfo(BaseModel):
     address: Optional[str]
     name: Optional[str]
     image: Optional[str]
+    comfort: Optional[List[ComfortEnum]]
+
