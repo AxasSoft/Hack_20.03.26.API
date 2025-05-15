@@ -112,7 +112,7 @@ class ETGOstrovokManager:
             hotel_getting_data.free_cancellation = True if first_rate_payment["cancellation_penalties"]["free_cancellation_before"] \
                 else False
             hotel_getting_data.room_name = first_rate["room_name"]
-            hotel_getting_data.rate = first_rate_payment["show_amount"]
+            hotel_getting_data.price = first_rate_payment["show_amount"]
             hotel_getting_data.currency = first_rate_payment["currency_code"]
 
             hotels_getting_data[available_hotel["hid"]] = hotel_getting_data
@@ -146,6 +146,15 @@ class ETGOstrovokManager:
         data, paginator = get_page_no_db(hotel_list, page)
 
         return data, paginator
+    #
+    # def get_hotel(
+    #         self,
+    #         checkin: int,
+    #         checkout: int,
+    #         guests: Optional[List[RoomGuests]],
+    #         page: Optional[int] = None
+    # ):
+
 
 
 ostrovok_manager = ETGOstrovokManager()
