@@ -98,7 +98,7 @@ class ETGOstrovokManager:
             logging.info("ETG response: %s", response)
 
         hotels_hids = []
-        hotels_getting_data = {}
+        hotels_getting_data = {}  # {'hid': data_obj}
         for available_hotel in response["data"]["hotels"]:
             hotels_hids.append(available_hotel["hid"])
             hotel_getting_data = GettingHotelSearchInfo()
@@ -140,7 +140,10 @@ class ETGOstrovokManager:
         except Exception as e:
             print(e)
 
-        data, paginator = get_page_no_db(list(hotels_getting_data.values()), page)
+        hotel_list = []
+        for hid in hotels_hids:
+            hotel_list.append(hotels_getting_data[hid])
+        data, paginator = get_page_no_db(hotel_list, page)
 
         return data, paginator
 
