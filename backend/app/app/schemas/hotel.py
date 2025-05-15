@@ -16,6 +16,7 @@ class SimpleSearchCriteria(BaseModel):
     checkout: int
     guests: Optional[List[RoomGuests]]
 
+
 class ComfortEnum(str, Enum):
     PARKING = "parking"
     INTERNET = "internet"
@@ -23,6 +24,20 @@ class ComfortEnum(str, Enum):
     TRANSFER = "transfer"
     ANIMALS = "animals"
 
+
+class HotelDescriptionChapter(BaseModel):
+    title: str
+    paragraphs: List[str]
+
+
+class HotelComfortChapter(BaseModel):
+    title: str
+    amenities: List[str]
+
+class AvailableRoom(BaseModel):
+    images: List[str]
+    price: float
+    room_name: str
 
 
 class GettingHotelSearchInfo(BaseModel):
@@ -38,4 +53,17 @@ class GettingHotelSearchInfo(BaseModel):
     name: Optional[str]
     image: Optional[str]
     comfort: Optional[List[ComfortEnum]]
+
+
+class GettingHotelBookingInfo(BaseModel):
+    hid: Optional[str]
+    images: Optional[List[str]]
+    address: Optional[str]
+    name: Optional[str]
+    comfort: Optional[List[HotelComfortChapter]]
+    description: Optional[List[HotelDescriptionChapter]]
+    lat: Optional[float]
+    lon: Optional[float]
+    available_rooms: Optional[List[AvailableRoom]]
+
 

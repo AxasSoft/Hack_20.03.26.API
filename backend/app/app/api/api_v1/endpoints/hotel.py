@@ -67,16 +67,71 @@ def get_hotels(
     )
 
 
+# @router.get(
+#     '/raw_hotels/{hotel_hid}/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Страница отеля",
+#     description="""параметр guests: 2 - число взрослых /
+# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+#     tags=["Мобильное приложение / Отели"]
+# )
+def raw_get_hotel(
+        # db: Session = Depends(deps.get_db),
+        hotel_hid: int = Path(..., title="Идентификатор отеля"),
+        checkin: int = Query(..., title='Дата заезда'),
+        checkout: int = Query(..., title='Дата выезда'),
+        guests: str = Query(..., title="Количество гостей"),
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_get_hotel(checkin=checkin, checkout=checkout, guests=guests, hid=hotel_hid)
+    return JSONResponse(content=resp)
+
+
+# @router.get(
+#     '/prebooking/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Пред бронирование",
+#     tags=["Мобильное приложение / Отели"]
+# )
+def raw_prebooking(
+        # db: Session = Depends(deps.get_db),
+        booking_hash: str = Query(..., title="Хэш брони"),
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_prebooking(booking_hash=booking_hash)
+    return JSONResponse(content=resp)
+
+
+# @router.get(
+#     '/prebooking23/',
+#     name="Сырой запрос - Пред бронирование",
+#     tags=["Мобильное приложение / Отели"]
+# )
+def raw_prebooking():
+    print('JOPA')
+    return None
+
+
 @router.get(
-    '/hotels/<hotel_hid>/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Страница отеля",
+    '/cp/hotels/{hotel_hid}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingHotelBookingInfo],
+    name="Страница отеля",
+    description="""параметр guests: 2 - число взрослых /
+2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 10 лет""",
+    tags=["Административная панель / Отели"]
+)
+@router.get(
+    '/hotels/{hotel_hid}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingHotelBookingInfo],
+    name="Страница отеля",
     description="""параметр guests: 2 - число взрослых /
 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
     tags=["Мобильное приложение / Отели"]
 )
-def raw_get_hotel(
+def get_hotel(
         # db: Session = Depends(deps.get_db),
         checkin: int = Query(..., title='Дата заезда'),
         checkout: int = Query(..., title='Дата выезда'),
@@ -84,39 +139,5 @@ def raw_get_hotel(
         hotel_hid: int = Path(..., title="Идентификатор отеля"),
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    resp =  ostrovok_manager.raw_get_hotel(checkin=checkin, checkout=checkout, guests=guests, hid=hotel_hid)
-    return JSONResponse(content=resp)
-
-
-
-# @router.get(
-#     '/cp/hotels/<hotel_hid>/',
-#     response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-#     name="Поиск отеля",
-#     description="""параметр guests: 2 - число взрослых /
-# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
-# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 10 лет""",
-#     tags=["Административная панель / Отели"]
-# )
-# @router.get(
-#     '/hotels/<hotel_hid>/',
-#     response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-#     name="Поиск отеля",
-#     description="""параметр guests: 2 - число взрослых /
-# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
-# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
-#     tags=["Мобильное приложение / Отели"]
-# )
-# def get_hotels(
-#         # db: Session = Depends(deps.get_db),
-#         checkin: int = Query(..., title='Дата заезда'),
-#         checkout: int = Query(..., title='Дата выезда'),
-#         guests: str = Query(..., title="Количество гостей"),
-#         hotel_hid: int = Path(..., title="Идентификатор отеля"),
-#         current_user: models.User = Depends(deps.get_current_active_user),
-# ):
-#     data, paginator = ostrovok_manager.get_hotels(checkin=checkin, checkout=checkout, guests=guests, hid=hotel_hid)
-#     return schemas.ListOfEntityResponse(
-#         data=data,
-#         meta=schemas.response.Meta(paginator=paginator)
-#     )
+    hotel = ostrovok_manager.get_hotel(checkin=checkin, checkout=checkout, guests=guests, hid=hotel_hid)
+    return schemas.SingleEntityResponse(data=hotel)
