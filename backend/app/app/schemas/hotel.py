@@ -31,7 +31,7 @@ class GettingHotelSearchInfo(BaseModel):
     card_payment: Optional[bool]
     free_cancellation: Optional[bool]
     room_name: Optional[str]
-    rate: Optional[float]
+    price: Optional[float]
     currency: Optional[str]
     image: Optional[str]
     address: Optional[str]
