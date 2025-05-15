@@ -29,7 +29,7 @@ def get_page_no_db(elements: List, page: Optional[int]) -> Tuple[List, Optional[
     items_per_page=30
     total = (len(elements) + (items_per_page - 1)) // items_per_page
     if 0 < page <= total:
-        list_elements = elements[items_per_page*page:items_per_page*(page+1)]
+        list_elements = elements[items_per_page*(page - 1):items_per_page*page]
     else:
         list_elements = []
 
