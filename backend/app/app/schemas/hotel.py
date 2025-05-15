@@ -34,6 +34,11 @@ class HotelComfortChapter(BaseModel):
     title: str
     amenities: List[str]
 
+    class Config:
+        schema_extra = {
+            "description": f'Заголовки удобств: "Бассейн и пляж", "Интернет", "Животные", "Парковка", "Трансфер", "Общее", "Питание", "В номерах"'
+        }
+
 class AvailableRoom(BaseModel):
     images: List[str]
     price: float
