@@ -12,6 +12,7 @@ from app.exceptions import UnprocessableEntity
 from app.schemas.hotel import RoomGuests, GettingHotelSearchInfo
 from app.utils.datetime import from_unix_timestamp
 from app.utils.pagination import get_page_no_db
+from fastapi import HTTPException
 
 from app.core.config import settings
 
@@ -31,35 +32,18 @@ class ETGOstrovokManager:
         self.region_id = 965821545
         self.search_by_region_url = "https://api.worldota.net/api/b2b/v3/search/serp/region/"
         self.encoded_credentials = base64.b64encode(f"{self.KEY_ID}:{self.API_KEY}".encode("ascii")).decode("ascii")
-    # def send(self, tel: str) -> str:
-    #     url = "https://api3.greensms.ru/telegram/send"
-    #     tel_4428 = ["79892224422"]
-    #     if tel in tel_4428:
-    #         return "4428"
-    #
-    #     if tel == "79618196956":
-    #         return "1212"
-    #
-    #     code = generate_random_password(length=4, digits_only=True)
-    #     params = {
-    #         "to": f'+{tel}',
-    #         "txt": code
-    #     }
-    #     headers = {
-    #         "Authorization": f"Bearer {os.getenv('GSMS_TOKEN')}"
-    #     }
-    #     try:
-    #         response = requests.post(url, data=params, headers=headers).json()
-    #         logging.info("GreenSms response: %s", response)
-    #         print("GreenSms response: %s", response)
-    #         if 'request_id' not in response:
-    #             raise UnprocessableEntity(message="Ошибка отправки кода", num=1)
-    #
-    #     except Exception as e:
-    #         logging.error(e)
-    #         raise UnprocessableEntity(message="Что-то пошло не так", num=2)
-    #
-    #     return code
+
+    def parse_guests_query(self, guests_str: str) -> List[RoomGuests]:
+        try:
+            rooms = []
+            for room_str in guests_str.split("-"):
+                parts = room_str.split("and")
+                adults = int(parts[0])
+                children = list(map(int, parts[1].split("."))) if len(parts) > 1 else None
+                rooms.append(RoomGuests(adults=adults, children=children))
+            return rooms
+        except Exception as e:
+            raise HTTPException(400, f"Invalid format. Expected 'XandY.Z-XandY.Z', got '{guests_str}'. Error: {e}")
 
     def get_hotels(
             self,
@@ -68,11 +52,13 @@ class ETGOstrovokManager:
             # currency: Optional[str] = None,
             # hotels_limit: Optional[int] = None,
             # language: Optional[str] = None,
-            guests: Optional[List[RoomGuests]],
+            # guests: Optional[List[RoomGuests]],
+            guests: Optional[str],
             page: Optional[int] = None
     ):
         checkin_date = str(from_unix_timestamp(checkin).date())
         checkout_date = str(from_unix_timestamp(checkout).date())
+        gest_list = self.parse_guests_query(guests)
         payload = {
             "checkin": checkin_date,
             "checkout": checkout_date,
@@ -80,7 +66,7 @@ class ETGOstrovokManager:
         }
         if guests:
             payload["guests"] = [
-                guest.dict(exclude_unset=True) for guest in guests
+                guest.dict(exclude_unset=True) for guest in gest_list
             ]
         logging.info("Payload for search: %s", payload)
 
@@ -126,7 +112,9 @@ class ETGOstrovokManager:
                         obj = hotels_getting_data[hotel_data.get("hid")]
                         obj.address = hotel_data.get("address")
                         obj.name = hotel_data.get("name")
-                        obj.image = hotel_data.get("images")[0]
+                        image_url = hotel_data.get("images")[0].replace('{size}', '1024x768')
+                        obj.image = image_url
+                        'aaa'.replace('s', 'dd')
 
                         hotel_comfort = []
                         for amenity_group in hotel_data.get("amenity_groups"):
@@ -146,14 +134,41 @@ class ETGOstrovokManager:
         data, paginator = get_page_no_db(hotel_list, page)
 
         return data, paginator
-    #
-    # def get_hotel(
-    #         self,
-    #         checkin: int,
-    #         checkout: int,
-    #         guests: Optional[List[RoomGuests]],
-    #         page: Optional[int] = None
-    # ):
+
+    def raw_get_hotel(
+            self,
+            hid: int,
+            checkin: int,
+            checkout: int,
+            guests: Optional[str]
+    ):
+        checkin_date = str(from_unix_timestamp(checkin).date())
+        checkout_date = str(from_unix_timestamp(checkout).date())
+        gest_list = self.parse_guests_query(guests)
+        payload = {
+            "checkin": checkin_date,
+            "checkout": checkout_date,
+            "hid": hid
+        }
+        if guests:
+            payload["guests"] = [
+                guest.dict(exclude_unset=True) for guest in gest_list
+            ]
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            self.search_by_region_url,
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
 
 
 
