@@ -33,17 +33,17 @@ class ETGOstrovokManager:
         self.search_by_region_url = "https://api.worldota.net/api/b2b/v3/search/serp/region/"
         self.encoded_credentials = base64.b64encode(f"{self.KEY_ID}:{self.API_KEY}".encode("ascii")).decode("ascii")
 
-    def parse_guests_query(self, guests_str: str) -> List[RoomGuests]:
-        try:
-            rooms = []
-            for room_str in guests_str.split("-"):
-                parts = room_str.split("and")
-                adults = int(parts[0])
-                children = list(map(int, parts[1].split("."))) if len(parts) > 1 else None
-                rooms.append(RoomGuests(adults=adults, children=children))
-            return rooms
-        except Exception as e:
-            raise HTTPException(400, f"Invalid format. Expected 'XandY.Z-XandY.Z', got '{guests_str}'. Error: {e}")
+    # def parse_guests_query(self, guests_str: str) -> List[RoomGuests]:
+    #     try:
+    #         rooms = []
+    #         for room_str in guests_str.split("-"):
+    #             parts = room_str.split("and")
+    #             adults = int(parts[0])
+    #             children = list(map(int, parts[1].split("."))) if len(parts) > 1 else None
+    #             rooms.append(RoomGuests(adults=adults, children=children))
+    #         return rooms
+    #     except Exception as e:
+    #         raise HTTPException(400, f"Invalid format. Expected 'XandY.Z-XandY.Z', got '{guests_str}'. Error: {e}")
 
     def get_hotels(
             self,
@@ -52,13 +52,13 @@ class ETGOstrovokManager:
             # currency: Optional[str] = None,
             # hotels_limit: Optional[int] = None,
             # language: Optional[str] = None,
-            # guests: Optional[List[RoomGuests]],
-            guests: Optional[str],
+            guests: Optional[List[RoomGuests]],
+            # guests: Optional[str],
             page: Optional[int] = None
     ):
         checkin_date = str(from_unix_timestamp(checkin).date())
         checkout_date = str(from_unix_timestamp(checkout).date())
-        gest_list = self.parse_guests_query(guests)
+        # gest_list = self.parse_guests_query(guests)
         payload = {
             "checkin": checkin_date,
             "checkout": checkout_date,
@@ -66,7 +66,7 @@ class ETGOstrovokManager:
         }
         if guests:
             payload["guests"] = [
-                guest.dict(exclude_unset=True) for guest in gest_list
+                guest.dict(exclude_unset=True) for guest in guests
             ]
         logging.info("Payload for search: %s", payload)
 
