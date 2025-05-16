@@ -307,19 +307,16 @@ def cancel_booking(
     return schemas.SingleEntityResponse(data=resp)
 
 
-@router.get(
-    '/secure_check/',
+@router.post(
+    '/pay/',
     name="Оплата?",
     tags=["Мобильное приложение / Отели"]
 )
 def secure_check(
         url: str,
+        data: schemas.ETGPayData,
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    data = {
-        "MD": "2025051612243742664G",
-        "PaReq": "eJxVUtFywiAQ/BXHdwMhQIxzMqP1oT6YWms/gBLUTE2ihKj16wvRaMsMM7fL3XK3AOud0Xr2oVVjtICFrmu51b08G/eVCjWXNBlkdCgHFPNoMIwpHzCivhLMNzwMh30By8lKHwWctKnzqhRhgAMCqINO0aidLK0AqY7TeSooIZQwQHcIhTbzmYgxTmJMCb4tQDcaSlloUdXWVKfqOzANoJYBVTWlNT+C0whQB6Axe7Gz9lCPECoO+2ZrL5ugaPY2V9JY2db7HEDPtpaNj2qneckzsVgrnF4X7G02j9Lr+zldT86LWbvHgHwGZNJqQTBhmIW8F7IRoaMoBtTyIAvfjGAR760+p27MG4aDv2byOPQj/qXA+W90qbqJOgT6cqhK7TKcqY8Y0LPrl1dvrbLOLRIzPIyjmPPI+9tyXiB33pAE01bBA0C+Ct2fDt1f3UX/fsMvzzKvQQ==",
-        "TermUrl": "https://ostrovok.ru/secure/pay_complete_3ds/?payment_id=31070255&ret_path=http://109.73.199.21/api/v1/success"
-      }
-    resp = ostrovok_manager.secure_check(url=url, data=data)
+    data_dict = data.dict()
+    resp = ostrovok_manager.secure_check(url=url, data=data_dict)
     return schemas.SingleEntityResponse(data=resp)

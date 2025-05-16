@@ -79,3 +79,12 @@ class ClientBookingData(BaseModel):
     email: str
 
 
+class ETGPayData(BaseModel):
+    MD: str
+    PaReq: str
+    TermUrl: str
+
+
+
+
+
