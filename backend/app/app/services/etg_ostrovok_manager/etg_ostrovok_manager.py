@@ -271,6 +271,7 @@ class ETGOstrovokManager:
             "user_ip": "109.73.199.21"
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -309,6 +310,7 @@ class ETGOstrovokManager:
 
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -366,6 +368,7 @@ class ETGOstrovokManager:
 
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -390,6 +393,7 @@ class ETGOstrovokManager:
 
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -548,8 +552,11 @@ class ETGOstrovokManager:
             allow_redirects=True,
         )
         logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
         logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
