@@ -1,8 +1,8 @@
 import json
 import logging
 from http.client import responses
-from pydoc import describe
-from typing import Optional, List
+import uuid
+from typing import Optional, List, Union
 import requests
 import base64
 from requests.auth import HTTPBasicAuth
@@ -12,7 +12,8 @@ from app.core.config import settings
 from app.utils.security import generate_random_password
 from app.exceptions import UnprocessableEntity
 from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
-                               AvailableRoom, HotelComfortChapter)
+                               AvailableRoom, HotelComfortChapter, ClientBookingData)
+from app.schemas.credit_card import CreditCardData, CreditCardCvc
 from app.utils.datetime import from_unix_timestamp
 from app.utils.pagination import get_page_no_db
 from fastapi import HTTPException
@@ -89,8 +90,14 @@ class ETGOstrovokManager:
             logging.info("ETG response: %s", response)
 
         hotels_hids = []
+        # if in cash:
+        # hotels_user_hids = cash
+        # hotels_user_hids_page = pafinator
         hotels_getting_data = {}  # {'hid': data_obj}
         for available_hotel in response["data"]["hotels"]:
+            # if hotels_user_hids_page
+            # and available_hotel["hid"] not in hotels_user_hids_page
+            # con
             hotels_hids.append(available_hotel["hid"])
             hotel_getting_data = GettingHotelSearchInfo()
             hotel_getting_data.hid = available_hotel["hid"]
@@ -251,6 +258,303 @@ class ETGOstrovokManager:
         response_info.available_rooms = available_rooms
 
         return response_info
+
+
+    def raw_create_booking(
+            self,
+            booking_hash: str
+    ):
+        payload = {
+            "partner_order_id": str(uuid.uuid4()),
+            "book_hash": booking_hash,
+            "language": "ru",
+            "user_ip": "109.73.199.21"
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/booking/form/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def raw_create_credit_card_token(
+            self,
+            object_id: str,
+            user_first_name: str,
+            user_last_name: str,
+            credit_card_data_core: CreditCardData,
+            is_cvc_required: bool,
+            cvc: Optional[str] = None
+
+    ):
+        payload = {
+            "object_id": object_id,
+            "pay_uuid": str(uuid.uuid4()),
+            "init_uuid": str(uuid.uuid4()),
+            "user_first_name": user_first_name,
+            "user_last_name": user_last_name,
+            "is_cvc_required": is_cvc_required,
+            "credit_card_data_core": credit_card_data_core.dict(),
+            "cvc": cvc,
+
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.payota.net/api/public/v1/manage/init_partners",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+    def raw_booking_hotel(
+            self,
+            partner_order_id: str,
+            payment_type: str,
+            amount: str,
+            currency_code: str,
+            client: ClientBookingData,
+            init_uuid: Optional[str] = None,
+            pay_uuid: Optional[str] = None,
+
+    ):
+        payload = {
+            "language": "ru",
+            "pay_uuid": str(uuid.uuid4()),
+            "partner": {"partner_order_id": partner_order_id},
+            "payment_type": {
+                "type": payment_type,
+                "amount": amount,
+                "currency_code": currency_code,
+                "init_uuid": init_uuid,
+                "pay_uuid": pay_uuid
+            },
+            "upsell_data": [],
+            "return_path": "http://109.73.199.21/api/v1/success",
+            "rooms": [
+                {
+                "guests": [
+                    {
+                        "first_name": "Фы",
+                        "last_name": "Фы",
+                    }
+                ]
+                }
+            ],
+            "user": {
+                "email": "s.pashov@axas.ru",
+                "phone": "79024066769"
+            },
+            "supplier_data": client.dict()
+
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/booking/finish/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+    def raw_check_booking(
+            self,
+            partner_order_id: str
+    ):
+        payload = {
+            "partner_order_id": partner_order_id,
+
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/booking/finish/status/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def raw_search_by_hid(
+        self,
+        checkin: int,
+        checkout: int,
+        guests: Optional[List[RoomGuests]]
+    ):
+        checkin_date = str(from_unix_timestamp(checkin).date())
+        checkout_date = str(from_unix_timestamp(checkout).date())
+        payload = {
+            "checkin": checkin_date,
+            "checkout": checkout_date,
+            "ids": ['test_hotel_do_not_book'],
+            # "hids": [6291619],
+        }
+        if guests:
+            payload["guests"] = [
+                guest.dict(exclude_unset=True) for guest in guests
+            ]
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/search/serp/hotels/",
+            # auth=HTTPBasicAuth(settings.ETG_KEY_ID, settings.ETG_API_KEY),
+            headers=headers,
+            json=payload
+        ).json()
+
+        return response
+
+    def raw_get_test_hotel(
+            self,
+            checkin: int,
+            checkout: int,
+            guests: Optional[str]
+    ):
+        checkin_date = str(from_unix_timestamp(checkin).date())
+        checkout_date = str(from_unix_timestamp(checkout).date())
+        gest_list = self.parse_guests_query(guests)
+        payload = {
+            "checkin": checkin_date,
+            "checkout": checkout_date,
+            "id": "test_hotel_do_not_book"
+        }
+        if guests:
+            payload["guests"] = [
+                guest.dict(exclude_unset=True) for guest in gest_list
+            ]
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/search/hp/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def raw_get_bookings(
+            self,
+    ):
+        payload = {
+          "ordering": {
+            "ordering_type": "desc",
+            "ordering_by": "created_at"
+          },
+          "pagination": {
+            "page_size": "10",
+            "page_number": "1"
+          }
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/info/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def cancel_booking(
+            self,
+            partner_order_id: str
+    ):
+        payload = {
+          "partner_order_id": partner_order_id
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/cancel/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def secure_check(
+            self,
+            url: str,
+            data: dict,
+            method: str = 'post'
+    ):
+        payload = data
+        logging.info("Payload for search: %s", payload)
+
+        # headers = {
+        #     "Content-Type": "application/json",
+        #     "Authorization": f"Basic {self.encoded_credentials}"
+        # }
+        response = requests.post(
+            url,
+            # headers=headers,
+            json=payload,
+            allow_redirects=True,
+        )
+        logging.info("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
 
 ostrovok_manager = ETGOstrovokManager()
 

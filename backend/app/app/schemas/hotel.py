@@ -72,3 +72,10 @@ class GettingHotelBookingInfo(BaseModel):
     available_rooms: Optional[List[AvailableRoom]]
 
 
+class ClientBookingData(BaseModel):
+    first_name_original: str
+    last_name_original: str
+    phone: str
+    email: str
+
+

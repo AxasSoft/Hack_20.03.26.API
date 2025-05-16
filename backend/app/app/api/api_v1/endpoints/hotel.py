@@ -67,15 +67,15 @@ def get_hotels(
     )
 
 
-# @router.get(
-#     '/raw_hotels/{hotel_hid}/',
-#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-#     name="Сырой запрос - Страница отеля",
-#     description="""параметр guests: 2 - число взрослых /
-# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
-# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
-#     tags=["Мобильное приложение / Отели"]
-# )
+@router.get(
+    '/raw_hotels/{hotel_hid}/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Страница отеля",
+    description="""параметр guests: 2 - число взрослых /
+2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+    tags=["Мобильное приложение / Отели"]
+)
 def raw_get_hotel(
         # db: Session = Depends(deps.get_db),
         hotel_hid: int = Path(..., title="Идентификатор отеля"),
@@ -88,12 +88,12 @@ def raw_get_hotel(
     return JSONResponse(content=resp)
 
 
-# @router.get(
-#     '/prebooking/',
-#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-#     name="Сырой запрос - Пред бронирование",
-#     tags=["Мобильное приложение / Отели"]
-# )
+@router.get(
+    '/prebooking/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Пред бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
 def raw_prebooking(
         # db: Session = Depends(deps.get_db),
         booking_hash: str = Query(..., title="Хэш брони"),
@@ -141,3 +141,185 @@ def get_hotel(
 ):
     hotel = ostrovok_manager.get_hotel(checkin=checkin, checkout=checkout, guests=guests, hid=hotel_hid)
     return schemas.SingleEntityResponse(data=hotel)
+
+
+
+@router.get(
+    '/create_booking/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Создать бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
+def raw_create_booking(
+        # db: Session = Depends(deps.get_db),
+        booking_hash: str = Query(..., title="Хэш брони"),
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_create_booking(booking_hash=booking_hash)
+    return JSONResponse(content=resp)
+
+
+@router.post(
+    '/create_credit_card_token/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Создать токен кредитной карты",
+    tags=["Мобильное приложение / Отели"]
+)
+def raw_create_credit_card_token(
+        # db: Session = Depends(deps.get_db),
+        object_id: str,
+        user_first_name: str,
+        user_last_name: str,
+        is_cvc_required: bool,
+        credit_card_data_core: schemas.CreditCardData,
+        cvc: Optional[str] = None,
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_create_credit_card_token(
+        object_id=object_id,
+        user_first_name=user_first_name,
+        user_last_name=user_last_name,
+        is_cvc_required=is_cvc_required,
+        cvc=cvc,
+        credit_card_data_core=credit_card_data_core
+    )
+    return JSONResponse(content=resp)
+
+
+@router.post(
+    '/raw_booking_hotel/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Забронировать отель",
+    tags=["Мобильное приложение / Отели"]
+)
+def raw_booking_hotel(
+        # db: Session = Depends(deps.get_db),
+        partner_order_id: str,
+        payment_type: str,
+        amount: str,
+        currency_code: str,
+        client: schemas.ClientBookingData,
+        init_uuid: Optional[str] = None,
+        pay_uuid: Optional[str] = None,
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_booking_hotel(
+        partner_order_id=partner_order_id,
+        payment_type=payment_type,
+        amount=amount,
+        currency_code=currency_code,
+        client=client,
+        init_uuid=init_uuid,
+        pay_uuid=pay_uuid
+    )
+    return JSONResponse(content=resp)
+
+
+@router.get(
+    '/raw_check_booking/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Создать бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
+def raw_create_booking(
+        # db: Session = Depends(deps.get_db),
+        partner_order_id: str = Query(..., title="бронь"),
+        current_user: models.User = Depends(deps.get_current_active_user)
+):
+    resp =  ostrovok_manager.raw_check_booking(partner_order_id=partner_order_id)
+    return JSONResponse(content=resp)
+
+
+@router.get(
+    '/hotels_by_hids/',
+    response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Поиск отелей по id",
+    description="""параметр guests: 2 - число взрослых /
+2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+    tags=["Мобильное приложение / Отели"]
+)
+def get_hotels(
+        checkin: int = Query(..., title='Дата заезда'),
+        checkout: int = Query(..., title='Дата выезда'),
+        guests: str = Query(..., title="Количество гостей"),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    def parse_guests_query(guests_str: str = Query(...)) -> List[RoomGuests]:
+        try:
+            rooms = []
+            for room_str in guests_str.split("-"):
+                parts = room_str.split("and")
+                adults = int(parts[0])
+                children = list(map(int, parts[1].split("."))) if len(parts) > 1 else None
+                rooms.append(RoomGuests(adults=adults, children=children))
+            return rooms
+        except Exception as e:
+            raise HTTPException(400, f"Invalid format. Expected 'XandY.Z-XandY.Z', got '{guests_str}'. Error: {e}")
+
+    gest_list = parse_guests_query(guests)
+    resp = ostrovok_manager.raw_search_by_hid(checkin=checkin, checkout=checkout, guests=gest_list)
+    return JSONResponse(content=resp)
+
+
+@router.get(
+    '/test/',
+    # response_model=schemas.SingleEntityResponse[schemas.GettingHotelBookingInfo],
+    name="Страница тест-отеля",
+    description="""параметр guests: 2 - число взрослых /
+2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+    tags=["Мобильное приложение / Отели"]
+)
+def raw_get_test_hotel(
+        # db: Session = Depends(deps.get_db),
+        checkin: int = Query(..., title='Дата заезда'),
+        checkout: int = Query(..., title='Дата выезда'),
+        guests: str = Query(..., title="Количество гостей"),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    hotel = ostrovok_manager.raw_get_test_hotel(checkin=checkin, checkout=checkout, guests=guests)
+    return schemas.SingleEntityResponse(data=hotel)
+
+
+@router.get(
+    '/set_bookings/',
+    name="Бронирования",
+    tags=["Мобильное приложение / Отели"]
+)
+def set_bookings(
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    resp = ostrovok_manager.raw_get_bookings()
+    return schemas.SingleEntityResponse(data=resp)
+
+
+@router.get(
+    '/cancel_booking/',
+    name="Бронирования",
+    tags=["Мобильное приложение / Отели"]
+)
+def cancel_booking(
+        partner_order_id: str,
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    resp = ostrovok_manager.cancel_booking(partner_order_id=partner_order_id)
+    return schemas.SingleEntityResponse(data=resp)
+
+
+@router.get(
+    '/secure_check/',
+    name="Оплата?",
+    tags=["Мобильное приложение / Отели"]
+)
+def secure_check(
+        url: str,
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    data = {
+        "MD": "2025051612243742664G",
+        "PaReq": "eJxVUtFywiAQ/BXHdwMhQIxzMqP1oT6YWms/gBLUTE2ihKj16wvRaMsMM7fL3XK3AOud0Xr2oVVjtICFrmu51b08G/eVCjWXNBlkdCgHFPNoMIwpHzCivhLMNzwMh30By8lKHwWctKnzqhRhgAMCqINO0aidLK0AqY7TeSooIZQwQHcIhTbzmYgxTmJMCb4tQDcaSlloUdXWVKfqOzANoJYBVTWlNT+C0whQB6Axe7Gz9lCPECoO+2ZrL5ugaPY2V9JY2db7HEDPtpaNj2qneckzsVgrnF4X7G02j9Lr+zldT86LWbvHgHwGZNJqQTBhmIW8F7IRoaMoBtTyIAvfjGAR760+p27MG4aDv2byOPQj/qXA+W90qbqJOgT6cqhK7TKcqY8Y0LPrl1dvrbLOLRIzPIyjmPPI+9tyXiB33pAE01bBA0C+Ct2fDt1f3UX/fsMvzzKvQQ==",
+        "TermUrl": "https://ostrovok.ru/secure/pay_complete_3ds/?payment_id=31070255&ret_path=http://109.73.199.21/api/v1/success"
+      }
+    resp = ostrovok_manager.secure_check(url=url, data=data)
+    return schemas.SingleEntityResponse(data=resp)
