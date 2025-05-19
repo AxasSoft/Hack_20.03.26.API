@@ -286,7 +286,7 @@ class ETGOstrovokManager:
             "https://api.worldota.net/api/b2b/v3/hotel/order/booking/form/",
             headers=headers,
             json=payload
-        ).json()
+        )
         logging.info("ETG response status code: %s", response.status_code)
         print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
@@ -296,7 +296,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
 
     def raw_create_credit_card_token(
@@ -331,7 +331,7 @@ class ETGOstrovokManager:
             "https://api.payota.net/api/public/v1/manage/init_partners",
             headers=headers,
             json=payload
-        ).json()
+        )
         logging.info("ETG response status code: %s", response.status_code)
         print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
@@ -341,7 +341,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
     def raw_booking_hotel(
             self,
@@ -395,7 +395,7 @@ class ETGOstrovokManager:
             "https://api.worldota.net/api/b2b/v3/hotel/order/booking/finish/",
             headers=headers,
             json=payload
-        ).json()
+        )
         logging.info("ETG response status code: %s", response.status_code)
         print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
@@ -405,7 +405,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
     def raw_check_booking(
             self,
@@ -426,7 +426,7 @@ class ETGOstrovokManager:
             "https://api.worldota.net/api/b2b/v3/hotel/order/booking/finish/status/",
             headers=headers,
             json=payload
-        ).json()
+        )
         logging.info("ETG response status code: %s", response.status_code)
         print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
@@ -436,7 +436,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
 
     def raw_search_by_hid(
@@ -501,7 +501,7 @@ class ETGOstrovokManager:
             "https://api.worldota.net/api/b2b/v3/search/hp/",
             headers=headers,
             json=payload
-        ).json()
+        )
         logging.info("ETG response status code: %s", response.status_code)
         print("ETG response status code: %s", response.status_code)
         logging.info("Response headers: %s", response.headers)
@@ -511,7 +511,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
 
     def raw_get_bookings(
@@ -599,7 +599,7 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        return response.json()
 
 
 ostrovok_manager = ETGOstrovokManager()
