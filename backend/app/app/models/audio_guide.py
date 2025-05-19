@@ -16,4 +16,5 @@ class AudioGuide(Base):
     lon = Column(Float, nullable=True)
 
     audio_files = relationship("AudioGuideFile", back_populates="audio_guide")
+    image = relationship("AudioGideImage", back_populates="audio_guide", uselist=False)
 

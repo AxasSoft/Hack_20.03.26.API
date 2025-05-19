@@ -177,7 +177,7 @@ def create_audio_guide(
     },
     tags=["Административная панель / Аудиогиды"]
 )
-def add_image(
+def add_audio(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_superuser),
         audio: UploadFile = File(...),
@@ -194,6 +194,51 @@ def add_image(
     crud.audio_guide.s3_client = s3_client
     crud.audio_guide.s3_bucket_name = s3_bucket_name
     crud.audio_guide.add_audio(db=db, audio_guide=audio_guide, audio_file=audio)
+    # excursion.is_accepted = None
+    # db.add(excursion)
+    # db.commit()
+    return schemas.response.SingleEntityResponse(
+        data=getters.audio_guide.get_audio_guide(audio_guide=audio_guide)
+    )
+
+
+@router.post(
+    '/cp/audio_guides/{audio_guide_id}/images/',
+    response_model=schemas.response.SingleEntityResponse[schemas.GettingAudioGuide],
+    name="Добавить картинку в аудиогид",
+    responses={
+        400: {
+            'model': schemas.response.OkResponse,
+            'description': 'Переданы невалидные данные'
+        },
+        422: {
+            'model': schemas.response.OkResponse,
+            'description': 'Переданы некорректные данные'
+        },
+        403: {
+            'model': schemas.response.OkResponse,
+            'description': 'Отказано в доступе'
+        },
+    },
+    tags=["Административная панель / Аудиогиды"]
+)
+def add_image(
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_superuser),
+        image: UploadFile = File(...),
+        s3_client: BaseClient = Depends(deps.get_s3_client),
+        s3_bucket_name: str = Depends(deps.get_bucket_name),
+        audio_guide_id: int = Path(..., title='Идентификатор экскурсии'),
+        # cache: Cache = Depends(deps.get_cache_list),
+):
+    # cache.delete_by_prefix('excursion_by_user')
+    audio_guide = crud.audio_guide.get_by_id(db=db, id=audio_guide_id)
+    if audio_guide is None:
+        raise UnfoundEntity(num=1, message='Аудиогид не найден')
+
+    crud.audio_guide.s3_client = s3_client
+    crud.audio_guide.s3_bucket_name = s3_bucket_name
+    crud.audio_guide.add_image(db=db, audio_guide=audio_guide, image=image)
     # excursion.is_accepted = None
     # db.add(excursion)
     # db.commit()

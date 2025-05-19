@@ -10,7 +10,7 @@ from fastapi import UploadFile
 
 from app.crud.base import CRUDBase
 from app import crud
-from app.models import User, AudioGuideFile
+from app.models import User, AudioGuideFile, AudioGideImage
 from app.models.audio_guide import AudioGuide
 from app.schemas.audio_guide import CreatingAudioGuide, UpdatingAudioGuide
 from app.exceptions import UnprocessableEntity, UnfoundEntity
@@ -92,6 +92,40 @@ class CRUDAudioGuide(CRUDBase[AudioGuide, CreatingAudioGuide, UpdatingAudioGuide
 
         db.commit()
         db.refresh(audio_file)
+        db.refresh(audio_guide)
+
+        return audio_guide
+
+    def add_image(self, db: Session, audio_guide: AudioGuide, image: UploadFile):
+        # old_audio_file = self.get_audio_by_guide(db=db, audio_guide=audio_guide)
+        # db.delete(old_audio_file)
+        # db.commit()
+
+        host = self.s3_client._endpoint.host
+
+        bucket_name = self.s3_bucket_name
+
+        url_prefix = host + '/' + bucket_name + '/'
+
+        name = 'audio_guide/images/' + uuid.uuid4().hex + os.path.splitext(image.filename)[1]
+
+        new_url = url_prefix + name
+
+        result = self.s3_client.put_object(
+            Bucket=bucket_name,
+            Key=name,
+            Body=image.file,
+            ContentType=image.content_type
+        )
+
+        if not (200 <= result.get('ResponseMetadata', {}).get('HTTPStatusCode', 500) < 300):
+            return None
+
+        image = AudioGideImage(image=new_url, audio_guide=audio_guide)
+        db.add(image)
+
+        db.commit()
+        db.refresh(image)
         db.refresh(audio_guide)
 
         return audio_guide
