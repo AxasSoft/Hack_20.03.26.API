@@ -38,4 +38,4 @@ class UpdatingAudioGuide(BaseAudioGuide):
 class GettingAudioGuide(IdModel, CreatingAudioGuide):
     audios: List[GettingAudio]
     created: int
-    image: str
+    image: Optional[str] = None
