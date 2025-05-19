@@ -59,3 +59,8 @@ class GettingExcursion(IdModel, CreatingExcursion):
     images: Optional[List[str]] = []
     reviews: Optional[List[GettingExcursionReview]]
 
+class GettingCPExcursion(IdModel, CreatingExcursion):
+    category: Optional[GettingExcursionCategory]
+    images: Optional[List[GettingImage]] = []
+    reviews: Optional[List[GettingExcursionReview]]
+

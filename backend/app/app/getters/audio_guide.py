@@ -19,6 +19,6 @@ def get_audio_guide(audio_guide: AudioGuide) -> GettingAudioGuide:
                          link=audio.audio)
             for audio in audio_guide.audio_files
         ],
-        image=audio_guide.image.image
+        image=audio_guide.image.image if audio_guide.image else None
     )
 

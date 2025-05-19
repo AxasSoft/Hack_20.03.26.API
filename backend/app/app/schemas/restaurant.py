@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, validator
 from .restaurant_review import GettingRestaurantReview
 from .id_model import IdModel
 from ..enums.restaurant_type import RestaurantType
+from .image import GettingImage
 
 
 class MultilineString(str):
@@ -52,4 +53,9 @@ class GettingRestaurant(IdModel, CreatingRestaurant):
     phone_numbers: Optional[List[str]]
     images: Optional[List[str]] = []
     reviews: Optional[List[GettingRestaurantReview]]
+
+
+class GettingCPRestaurant(GettingRestaurant):
+    images: Optional[List[GettingImage]] = []
+
 

@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.get(
     '/cp/excursions/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingExcursion],
+    response_model=schemas.ListOfEntityResponse[schemas.GettingCPExcursion],
     name="Получить все доступные экскурсии",
     tags=["Административная панель / Экскурсии"]
 )
@@ -30,7 +30,7 @@ def get_all(
     data, paginator = crud.excursion.get_by_category(db=db, category_id=category_id, page=page)
     return schemas.ListOfEntityResponse(
         data=[
-            getters.excursion.get_excursion(db=db, excursion=excursion)
+            getters.excursion.get_cp_excursion(db=db, excursion=excursion)
             for excursion
             in data
         ],
@@ -95,7 +95,7 @@ def create_excursion(
 
 @router.put(
     '/cp/excursions/{excursion_id}/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
+    response_model=schemas.SingleEntityResponse[schemas.GettingCPExcursion],
     name="Изменить экскурсию",
     responses={
         400: {
@@ -129,33 +129,10 @@ def edit_excursion(
             message="Экскурсия не найдена"
         )
     excursion = crud.excursion.update(db, db_obj=excursion, obj_in=data)
-    return schemas.SingleEntityResponse(data=getters.excursion.get_excursion(db=db, excursion=excursion))
+    return schemas.SingleEntityResponse(data=getters.excursion.get_cp_excursion(db=db, excursion=excursion))
 
 
-@router.get(
-    '/cp/excursions/{excursion_id}/',
-    response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
-    name="Получить экскурсию",
-    responses={
-        400: {
-            'model': schemas.OkResponse,
-            'description': 'Переданны невалидные данные'
-        },
-        422: {
-            'model': schemas.OkResponse,
-            'description': 'Переданные некорректные данные'
-        },
-        403: {
-            'model': schemas.OkResponse,
-            'description': 'Отказанно в доступе'
-        },
-        404: {
-            'model': schemas.OkResponse,
-            'description': 'Экскурсия не найдена'
-        }
-    },
-    tags=["Административная панель / Экскурсии"]
-)
+
 @router.get(
     '/excursion-categories/{category_id}/excursions/{excursion_id}/',
     response_model=schemas.SingleEntityResponse[schemas.GettingExcursion],
@@ -191,6 +168,43 @@ def get_excursion(
             message="Экскурсия не найдена"
         )
     return schemas.SingleEntityResponse(data=getters.excursion.get_excursion(excursion=excursion, db=db))
+
+
+@router.get(
+    '/cp/excursions/{excursion_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingCPExcursion],
+    name="Получить экскурсию",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Экскурсия не найдена'
+        }
+    },
+    tags=["Административная панель / Экскурсии"]
+)
+def get_excursion(
+        excursion_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    excursion = crud.excursion.get_by_id(db, id=excursion_id)
+    if excursion is None:
+        raise UnfoundEntity(
+            message="Экскурсия не найдена"
+        )
+    return schemas.SingleEntityResponse(data=getters.excursion.get_cp_excursion(excursion=excursion, db=db))
 
 
 
@@ -234,7 +248,7 @@ def delete_excursion(
 
 @router.post(
     '/cp/excursions/{excursion_id}/images/',
-    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
+    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingCPExcursion],
     name="Добавить изображение в экскурсию",
     responses={
         400: {
@@ -274,13 +288,13 @@ def add_image(
     # db.add(excursion)
     # db.commit()
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion.get_excursion(excursion=excursion, db=db)
+        data=getters.excursion.get_cp_excursion(excursion=excursion, db=db)
     )
 
 
 @router.delete(
     '/cp/excursions/images/{image_id}/',
-    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingExcursion],
+    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingCPExcursion],
     name="Удалить изображение экскурсии",
     responses={
         400: {
@@ -316,6 +330,6 @@ def delete_image(
     crud.crud_excursion.excursion.s3_bucket_name = s3_bucket_name
     crud.crud_excursion.excursion.delete_image(db=db, image=excursion_image)
     return schemas.response.SingleEntityResponse(
-        data=getters.excursion.get_excursion(db=db, excursion=excursion_image.excursion)
+        data=getters.excursion.get_cp_excursion(db=db, excursion=excursion_image.excursion)
     )
 
