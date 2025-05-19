@@ -43,3 +43,4 @@ from .restaurant import *
 from .restaurant_review import *
 from .transfer import *
 from .snowmobile_booking import *
+from .audio_guide import *

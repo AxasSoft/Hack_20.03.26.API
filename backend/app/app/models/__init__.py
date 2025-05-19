@@ -82,3 +82,6 @@ from .restaurant_review import *
 
 from .transfer import *
 from .snowmobile_booking import *
+
+from .audio_guide import *
+from .audio_guide_file import *
