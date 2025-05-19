@@ -287,6 +287,12 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
@@ -326,6 +332,12 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
@@ -384,6 +396,12 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
@@ -409,6 +427,12 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
@@ -434,6 +458,7 @@ class ETGOstrovokManager:
                 guest.dict(exclude_unset=True) for guest in guests
             ]
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -441,7 +466,6 @@ class ETGOstrovokManager:
         }
         response = requests.post(
             "https://api.worldota.net/api/b2b/v3/search/serp/hotels/",
-            # auth=HTTPBasicAuth(settings.ETG_KEY_ID, settings.ETG_API_KEY),
             headers=headers,
             json=payload
         ).json()
@@ -467,6 +491,7 @@ class ETGOstrovokManager:
                 guest.dict(exclude_unset=True) for guest in gest_list
             ]
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -477,6 +502,12 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
@@ -497,6 +528,7 @@ class ETGOstrovokManager:
           }
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -521,6 +553,7 @@ class ETGOstrovokManager:
           "partner_order_id": partner_order_id
         }
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         headers = {
             "Content-Type": "application/json",
@@ -545,6 +578,7 @@ class ETGOstrovokManager:
     ):
         payload = data
         logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
 
         # headers = {
         #     "Content-Type": "application/json",
