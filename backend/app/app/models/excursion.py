@@ -35,5 +35,5 @@ class Excursion(Base):
     images = relationship("ExcursionImage", back_populates="excursion", cascade="all, delete-orphan", order_by="ExcursionImage.num")
     bookings = relationship("ExcursionBooking", back_populates="excursion", cascade="all, delete-orphan")
     excursion_groups = relationship("ExcursionGroup", back_populates="excursion", cascade="all, delete-orphan")
-    reviews = relationship("ExcursionReview", back_populates="excursion")
+    reviews = relationship("ExcursionReview", back_populates="excursion", cascade="all, delete-orphan")
 

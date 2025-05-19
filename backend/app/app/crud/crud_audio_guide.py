@@ -81,11 +81,11 @@ class CRUDAudioGuide(CRUDBase[AudioGuide, CreatingAudioGuide, UpdatingAudioGuide
     #     return audio_guide
 
     def add_audio(self, db: Session, audio_guide: AudioGuide, audio_file: UploadFile):
-        # old_audio_file = self.get_audio_by_guide(db=db, audio_guide=audio_guide)
-        # db.delete(old_audio_file)
-        # db.commit()
-
         new_audio_url = self.add_audio_s3(audio_file=audio_file)
+        old_audio_file = self.get_audio_by_guide(db=db, audio_guide=audio_guide)
+        if old_audio_file:
+            db.delete(old_audio_file)
+            db.commit()
 
         audio_file = AudioGuideFile(audio=new_audio_url, audio_guide=audio_guide)
         db.add(audio_file)
@@ -97,9 +97,10 @@ class CRUDAudioGuide(CRUDBase[AudioGuide, CreatingAudioGuide, UpdatingAudioGuide
         return audio_guide
 
     def add_image(self, db: Session, audio_guide: AudioGuide, image: UploadFile):
-        # old_audio_file = self.get_audio_by_guide(db=db, audio_guide=audio_guide)
-        # db.delete(old_audio_file)
-        # db.commit()
+        old_image = audio_guide.image
+        if old_image:
+            db.delete(old_image)
+            db.commit()
 
         host = self.s3_client._endpoint.host
 

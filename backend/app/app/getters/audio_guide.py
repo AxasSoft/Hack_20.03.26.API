@@ -14,11 +14,8 @@ def get_audio_guide(audio_guide: AudioGuide) -> GettingAudioGuide:
         description=audio_guide.description,
         lat=audio_guide.lat,
         lon=audio_guide.lon,
-        audios=[
-            GettingAudio(id=audio.id,
-                         link=audio.audio)
-            for audio in audio_guide.audio_files
-        ],
+        audio=GettingAudio(id=audio_guide.audio_file.id,
+                         link=audio_guide.audio_file.audio) if audio_guide.audio_file else None,
         image=audio_guide.image.image if audio_guide.image else None
     )
 

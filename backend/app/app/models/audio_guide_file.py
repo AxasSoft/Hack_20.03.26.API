@@ -12,4 +12,4 @@ class AudioGuideFile(Base):
 
     audio_guide_id = Column(Integer, ForeignKey('audioguide.id', ondelete='CASCADE'), nullable=False, index=True)
 
-    audio_guide = relationship('AudioGuide', back_populates='audio_files')
+    audio_guide = relationship('AudioGuide', back_populates='audio_file')

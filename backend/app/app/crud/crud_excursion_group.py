@@ -48,7 +48,7 @@ class CRUDExcursionGroup(CRUDBase[ExcursionGroup, CreatingExcursionGroup, Updati
     def create(self, db: Session, *, obj_in: CreatingExcursionGroup, excursion_id: int) -> ExcursionGroup:
         started = from_unix_timestamp(obj_in.started)
         ended = from_unix_timestamp(obj_in.ended)
-        excursion = crud.excursion.get_by_id(id=excursion_id)
+        excursion = crud.excursion.get_by_id(db=db, id=excursion_id)
         db_obj = self.model(started=started,
                             ended=ended,
                             excursion_id=excursion_id,

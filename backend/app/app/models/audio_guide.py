@@ -15,6 +15,6 @@ class AudioGuide(Base):
     lat = Column(Float, nullable=True)
     lon = Column(Float, nullable=True)
 
-    audio_files = relationship("AudioGuideFile", back_populates="audio_guide")
-    image = relationship("AudioGideImage", back_populates="audio_guide", uselist=False)
+    audio_file = relationship("AudioGuideFile", back_populates="audio_guide", cascade="all, delete-orphan", uselist=False)
+    image = relationship("AudioGideImage", back_populates="audio_guide", cascade="all, delete-orphan", uselist=False)
 

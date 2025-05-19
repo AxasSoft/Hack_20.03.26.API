@@ -36,6 +36,6 @@ class UpdatingAudioGuide(BaseAudioGuide):
 
 
 class GettingAudioGuide(IdModel, CreatingAudioGuide):
-    audios: List[GettingAudio]
+    audio: Optional[GettingAudio] = None
     created: int
     image: Optional[str] = None
