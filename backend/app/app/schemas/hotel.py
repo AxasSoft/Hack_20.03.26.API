@@ -43,6 +43,7 @@ class AvailableRoom(BaseModel):
     images: List[str]
     price: float
     room_name: str
+    book_hash: str
 
 
 class GettingHotelSearchInfo(BaseModel):
@@ -64,6 +65,8 @@ class GettingHotelBookingInfo(BaseModel):
     hid: Optional[str]
     images: Optional[List[str]]
     address: Optional[str]
+    phone: Optional[str]
+    email: Optional[str]
     name: Optional[str]
     comfort: Optional[List[HotelComfortChapter]]
     description: Optional[List[HotelDescriptionChapter]]

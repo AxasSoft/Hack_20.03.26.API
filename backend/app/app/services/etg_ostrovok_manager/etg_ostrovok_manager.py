@@ -226,7 +226,9 @@ class ETGOstrovokManager:
             address=hotel_dum_data["address"],
             name=hotel_dum_data["name"],
             lat=hotel_dum_data["latitude"],
-            lon=hotel_dum_data["longitude"]
+            lon=hotel_dum_data["longitude"],
+            phone=hotel_dum_data["phone"],
+            email=hotel_dum_data["email"]
         )
         hotel_images = []
         for image in hotel_dum_data["images"]:
@@ -254,7 +256,10 @@ class ETGOstrovokManager:
             for hotel_room in hotel_dum_data["room_groups"]:
                 if hotel_room["name"] == room_name:
                     images = [img.replace('{size}', PICT_SIZE) for img in hotel_room["images"]]
-            available_rooms.append(AvailableRoom(price=price, room_name=room_name, images=images))
+            available_rooms.append(AvailableRoom(price=price,
+                                                 room_name=room_name,
+                                                 images=images,
+                                                 book_hash=room["book_hash"]))
         response_info.available_rooms = available_rooms
 
         return response_info

@@ -318,5 +318,10 @@ def secure_check(
         current_user: models.User = Depends(deps.get_current_active_user),
 ):
     data_dict = data.dict()
+    # data_dict = {
+    #     "MD": "2025051612473137524X",
+    #     "PaReq": "eJxVUsluwjAQ/RXEPbHjxDFBgyUoh3IIRTQ99OgYF6KSBcehtF/fOEuhlizNe555sxmSk1Zq/apkoxWHWNW1OKpJdlhM/YjJiNLUEcxPnUCkgRNFlDhUCi9NqQyp9KYcdsu9unC4Kl1nZcE9F7sE0AhbRS1PojAchLysNlseEBIQCmiAkCu9WXOGccRwQHB/APU0FCJXvKyNLq/lp6sbQB0DsmwKo795GPiARgCNPvOTMVU9Ryivzs3R3D7cvDmbTAptRBdvfQDdy9o11qpbzVt24HEi8fYnpi/JuxcnsbddL7/i/i4AWQ84CKM4wYRi6oUTj84DNvc9QB0PIrfFcDILSehP9m+rttOegspmWj6+20YfWWi3oFUhx75GBOpWlYWycYD+bED32p+e7YClaWdGGMUzxhixEgNnBbJ2QiTCQadgASAbhYYFomH3rfXvT/wCAMCwng==",
+    #     "termurl": "https://ostrovok.ru/secure/pay_complete_3ds/?payment_id=31070744&ret_path=http://109.73.199.21/api/v1/success"
+    #   }
     resp = ostrovok_manager.secure_check(url=url, data=data_dict)
     return schemas.SingleEntityResponse(data=resp)
