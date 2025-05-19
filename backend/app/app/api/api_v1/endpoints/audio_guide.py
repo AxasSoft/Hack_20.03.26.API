@@ -159,7 +159,7 @@ def create_audio_guide(
 
 @router.post(
     '/cp/audio_guides/{audio_guide_id}/audios/',
-    response_model=schemas.response.SingleEntityResponse[schemas.excursion.GettingAudioGuide],
+    response_model=schemas.response.SingleEntityResponse[schemas.GettingAudioGuide],
     name="Добавить аудио в аудиогид",
     responses={
         400: {
