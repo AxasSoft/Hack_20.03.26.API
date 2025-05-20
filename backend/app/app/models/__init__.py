@@ -86,3 +86,5 @@ from .snowmobile_booking import *
 from .audio_guide import *
 from .audio_guide_file import *
 from .audio_guide_image import *
+
+from .hotel_booking import *

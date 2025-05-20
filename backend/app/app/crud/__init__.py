@@ -48,3 +48,4 @@ from .crud_restaurant_review import restaurant_review
 from .crud_transfer import transfer
 from .crud_snowmobile_booking import snowmobile_booking
 from .crud_audio_guide import audio_guide
+from .crud_hotels_booking import hotel_booking

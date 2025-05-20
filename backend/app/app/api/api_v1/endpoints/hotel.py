@@ -325,3 +325,44 @@ def secure_check(
     #   }
     resp = ostrovok_manager.secure_check(url=url, data=data_dict)
     return schemas.SingleEntityResponse(data=resp)
+
+
+@router.post(
+    '/start_booking_hotel/',
+    response_model=schemas.SingleEntityResponse[schemas.CreatingBooking],
+    name="Начать бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
+def start_booking(
+        data: schemas.BookingHashData,
+        checkin: int = Query(..., title='Дата заезда'),
+        checkout: int = Query(..., title='Дата выезда'),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    new_hotel_booking = ostrovok_manager.create_booking(book_hash=data.book_hash,
+                                           match_hash=data.match_hash,
+                                           user_id=current_user.id,
+                                           checkin=checkin,
+                                           checkout=checkout,
+                                           db=db
+                                           )
+    return schemas.SingleEntityResponse(data=new_hotel_booking)
+
+
+@router.post(
+    '/finish_booking_hotel/',
+    response_model=schemas.SingleEntityResponse[schemas.CreatingBooking],
+    name="Закончить бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
+def finish_booking(
+        data: schemas.FinishBooking,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    hotel_booking = ostrovok_manager.booking_hotel(booking_id=data.booking_id,
+                                           user_data=data.user_data,
+                                           db=db
+                                           )
+    return schemas.SingleEntityResponse(data=hotel_booking)

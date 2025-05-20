@@ -1,9 +1,11 @@
 from typing import Optional, List
 from enum import Enum
+from datetime import datetime, date
 
 from pydantic import BaseModel, Field
 
 from .id_model import IdModel
+from .credit_card import CreditCardWithCvc
 
 
 class RoomGuests(BaseModel):
@@ -44,6 +46,9 @@ class AvailableRoom(BaseModel):
     price: float
     room_name: str
     book_hash: str
+    match_hash: str
+    is_need_credit_card_data: bool
+    is_payment_now: bool
 
 
 class GettingHotelSearchInfo(BaseModel):
@@ -86,6 +91,51 @@ class ETGPayData(BaseModel):
     MD: str
     PaReq: str
     TermUrl: str
+
+
+class BookingHashData(BaseModel):
+    book_hash: str
+    match_hash: str
+
+
+class PreCreatedBooking(BaseModel):
+    hotel_hid: str
+    hotel_name: str
+    room_id: Optional[int]
+    room_name: str
+
+
+class CreatedBooking(BaseModel):
+    price: float
+    currency: str
+    etg_pay_type: str
+    item_id: int
+    order_id: int
+    partner_order_id: str
+    checkin: date
+    checkout: date
+    user_id: int
+    is_need_credit_card_data: bool
+    is_need_cvc: bool
+
+
+class CreatingBooking(BaseModel):
+    booking_id: int
+    is_need_credit_card_data: bool
+    is_payment_now: bool
+
+
+class BookingUserData(BaseModel):
+    card_data: Optional[CreditCardWithCvc]
+    first_name: str
+    last_name: str
+    phone: str
+    email: str
+
+
+class FinishBooking(BaseModel):
+    booking_id: int
+    user_data: BookingUserData
 
 
 

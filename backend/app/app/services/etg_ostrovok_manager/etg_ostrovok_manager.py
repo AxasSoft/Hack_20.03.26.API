@@ -7,18 +7,23 @@ import requests
 import base64
 from requests.auth import HTTPBasicAuth
 import os
-
-from app.core.config import settings
-from app.utils.security import generate_random_password
-from app.exceptions import UnprocessableEntity
-from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
-                               AvailableRoom, HotelComfortChapter, ClientBookingData)
-from app.schemas.credit_card import CreditCardData, CreditCardCvc
-from app.utils.datetime import from_unix_timestamp
-from app.utils.pagination import get_page_no_db
+from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.core.config import settings
+from app.utils.security import generate_random_password
+from app.exceptions import UnprocessableEntity, UnfoundEntity
+from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
+                               AvailableRoom, HotelComfortChapter, ClientBookingData, PreCreatedBooking,
+                               CreatedBooking, BookingUserData, CreatingBooking)
+from app.schemas.credit_card import CreditCardData, CreditCardWithCvc
+from app.utils.datetime import from_unix_timestamp
+from app.utils.pagination import get_page_no_db
+from app.models import HotelBooking
+from app import crud
+
+from app.core.config import settings
+
 
 DUMP_PATH = "geogesh_hotels.json"
 BASE_COMFORT = {
@@ -251,6 +256,8 @@ class ETGOstrovokManager:
         available_rooms = []
         for room in hotel_api_data["rates"]:
             price = room["payment_options"]["payment_types"][0]["amount"]
+            is_payment_now = True if room["payment_options"]["payment_types"][0]["type"] == "now" else False
+            is_need_credit_card_data = room["payment_options"]["payment_types"][0]["is_need_credit_card_data"]
             room_name = room["room_name"]
             images = []
             for hotel_room in hotel_dum_data["room_groups"]:
@@ -259,7 +266,10 @@ class ETGOstrovokManager:
             available_rooms.append(AvailableRoom(price=price,
                                                  room_name=room_name,
                                                  images=images,
-                                                 book_hash=room["book_hash"]))
+                                                 book_hash=room["book_hash"],
+                                                 match_hash=room["match_hash"],
+                                                 is_payment_now=is_payment_now,
+                                                 is_need_credit_card_data=is_need_credit_card_data))
         response_info.available_rooms = available_rooms
 
         return response_info
@@ -299,25 +309,30 @@ class ETGOstrovokManager:
         return response.json()
 
 
-    def raw_create_credit_card_token(
+    def create_credit_card_token(
             self,
             object_id: str,
             user_first_name: str,
             user_last_name: str,
-            credit_card_data_core: CreditCardData,
-            is_cvc_required: bool,
-            cvc: Optional[str] = None
-
+            pay_uuid: str,
+            init_uuid: str,
+            credit_card_data: CreditCardWithCvc,
+            is_cvc_required: bool
     ):
         payload = {
             "object_id": object_id,
-            "pay_uuid": str(uuid.uuid4()),
-            "init_uuid": str(uuid.uuid4()),
+            "pay_uuid": pay_uuid,
+            "init_uuid": init_uuid,
             "user_first_name": user_first_name,
             "user_last_name": user_last_name,
             "is_cvc_required": is_cvc_required,
-            "credit_card_data_core": credit_card_data_core.dict(),
-            "cvc": cvc,
+            "credit_card_data_core": {
+                "year": credit_card_data.year,
+                "card_number": credit_card_data.card_number,
+                "card_holder": credit_card_data.card_holder,
+                "month": credit_card_data.month,
+            },
+            "cvc": credit_card_data.cvc,
 
         }
         logging.info("Payload for search: %s", payload)
@@ -331,17 +346,12 @@ class ETGOstrovokManager:
             "https://api.payota.net/api/public/v1/manage/init_partners",
             headers=headers,
             json=payload
-        )
-        logging.info("ETG response status code: %s", response.status_code)
-        print("ETG response status code: %s", response.status_code)
-        logging.info("Response headers: %s", response.headers)
-        print("Response headers: %s", response.headers)
-        logging.info("ETG response: %s", response.content)
-        print("ETG response: %s", response.content)
-        if "data" not in response:
-            logging.info("ETG response: %s", response)
+        ).json()
 
-        return response.json()
+        if "status" not in response:
+            raise UnprocessableEntity(message="Что-то пошло не так")
+
+        return response["status"]
 
     def raw_booking_hotel(
             self,
@@ -600,6 +610,203 @@ class ETGOstrovokManager:
             logging.info("ETG response: %s", response)
 
         return response.json()
+
+
+    def prebooking(
+            self,
+            book_hash: str
+    ):
+        payload = {
+            "hash": book_hash
+        }
+        logging.info("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/prebook/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        first_rate =response["data"]["hotels"][0]["rates"][0]
+
+        match_hash = first_rate["match_hash"]
+        new_book_hash = first_rate["book_hash"]
+        pre_book_data = PreCreatedBooking(
+            hotel_hid=response["data"]["hotels"][0]["hid"],
+            hotel_name=first_rate["room_name"],
+            room_name=first_rate["legal_info"]["hotel"]["name"]
+        )
+        return new_book_hash, match_hash, pre_book_data
+
+
+    def create_booking(
+            self,
+            db: Session,
+            book_hash: str,
+            match_hash: str,
+            checkin: int,
+            checkout: int,
+            user_id: int
+    ):
+        new_book_hash, verify_hash, pre_book_data = self.prebooking(book_hash=book_hash)
+        if match_hash != verify_hash:
+            raise UnprocessableEntity(message="Что-то пошло не так, обновите страницу")
+        payload = {
+            "partner_order_id": str(uuid.uuid4()),
+            "book_hash": new_book_hash,
+            "language": "ru",
+            "user_ip": "109.73.199.21"
+        }
+        logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/booking/form/",
+            headers=headers,
+            json=payload
+        )
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
+
+
+        resp = response.json()
+        if "data" not in resp:
+            raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
+        pay_data = resp["data"]["payment_types"][0]
+        creating_data = CreatedBooking(
+            price=int(float(pay_data["amount"]) * 100),
+            currency=pay_data["currency_code"],
+            etg_pay_type=pay_data["type"],
+            item_id=resp["data"]["item_id"],
+            order_id=resp["data"]["order_id"],
+            partner_order_id=resp["data"]["partner_order_id"],
+            checkin=from_unix_timestamp(checkin).date(),
+            checkout=from_unix_timestamp(checkout).date(),
+            user_id=user_id,
+            is_need_credit_card_data=pay_data["is_need_credit_card_data"],
+            is_need_cvc=pay_data["is_need_cvc"]
+        )
+        new_hotel_booking = crud.hotel_booking.create(db=db, obj_in=creating_data, **pre_book_data.dict())
+
+
+        return CreatingBooking(
+                is_need_credit_card_data=new_hotel_booking.is_need_credit_card_data,
+                booking_id=new_hotel_booking.id,
+                is_payment_now=True if new_hotel_booking.etg_pay_type == "now" else False
+            )
+
+
+    def booking_hotel(
+            self,
+            db: Session,
+            booking_id: int,
+            user_data: BookingUserData,
+
+    ):
+        booking = crud.hotel_booking.get_by_id(db=db, id=booking_id)
+        if booking is None:
+            raise UnfoundEntity(
+                message="Бронирование не найдено"
+            )
+        pay_uuid = str(uuid.uuid4())
+        init_uuid = str(uuid.uuid4())
+        if booking.is_need_credit_card_data:
+            status_credit_card_token = self.create_credit_card_token(
+                object_id=str(booking.item_id),
+                user_first_name=user_data.first_name,
+                user_last_name=user_data.last_name,
+                pay_uuid=pay_uuid,
+                init_uuid=init_uuid,
+                credit_card_data=user_data.card_data,
+                is_cvc_required=booking.is_need_cvc
+            )
+            booking.pay_uuid = pay_uuid
+            booking.init_uuid = init_uuid
+            db.commit()
+            db.refresh(booking)
+
+            if status_credit_card_token != "ok":
+                raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
+
+        payload = {
+            "language": "ru",
+            "partner": {"partner_order_id": booking.partner_order_id},
+            "payment_type": {
+                "type": booking.etg_pay_type,
+                "amount": str(booking.price / 100),
+                "currency_code": booking.currency,
+                "init_uuid": init_uuid,
+                "pay_uuid": pay_uuid
+            },
+            "upsell_data": [],
+            "return_path": "http://109.73.199.21/api/v1/success",
+            "rooms": [
+                {
+                "guests": [
+                    {
+                        "first_name": "Аа",
+                        "last_name": "Аа",
+                    }
+                ]
+                }
+            ],
+            "user": {
+                "email": "s.pashov@axas.ru",
+                "phone": "79024066769"
+            },
+            "supplier_data": {
+                "first_name_original": user_data.first_name,
+                "last_name_original": user_data.last_name,
+                "phone": user_data.phone,
+                "email": user_data.email
+            }
+
+        }
+        logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/booking/finish/",
+            headers=headers,
+            json=payload
+        )
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
+
+        resp = response.json()
+        if resp["status"] == "ok" or resp["error"] in ("unknown", "timeout"):
+            return CreatingBooking(
+                is_need_credit_card_data=booking.is_need_credit_card_data,
+                booking_id=booking.id,
+                is_payment_now=True if booking.etg_pay_type == "now" else False
+            )
+        else:
+            raise UnprocessableEntity(message="Что-то пошло не так")
+
+
+
 
 
 ostrovok_manager = ETGOstrovokManager()

@@ -14,5 +14,5 @@ class CreditCardData(BaseModel):
     card_holder: str
 
 
-class CreditCardCvc(BaseModel):
-    cvc: Optional[str]
+class CreditCardWithCvc(CreditCardData):
+    cvc: str
