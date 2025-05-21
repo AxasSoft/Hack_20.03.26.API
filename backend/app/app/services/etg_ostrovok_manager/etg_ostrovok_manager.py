@@ -20,6 +20,7 @@ from app.schemas.credit_card import CreditCardData, CreditCardWithCvc
 from app.utils.datetime import from_unix_timestamp, to_unix_timestamp
 from app.utils.pagination import get_page_no_db
 from app.models import HotelBooking
+from app.enums.hotel_booking_status import HotelBookingStatus
 from app import crud
 
 from app.core.config import settings
@@ -381,7 +382,16 @@ class ETGOstrovokManager:
             "https://api.payota.net/api/public/v1/manage/init_partners",
             headers=headers,
             json=payload
-        ).json()
+        )
+
+        logging.info("ETG response status code: %s", response.status_code)
+        print("ETG response status code: %s", response.status_code)
+        logging.info("Response headers: %s", response.headers)
+        print("Response headers: %s", response.headers)
+        logging.info("ETG response: %s", response.content)
+        print("ETG response: %s", response.content)
+
+        response = response.json()
 
         if "status" not in response:
             raise UnprocessableEntity(message="Что-то пошло не так")
@@ -773,13 +783,15 @@ class ETGOstrovokManager:
                 credit_card_data=user_data.card_data,
                 is_cvc_required=booking.is_need_cvc
             )
+            print("*****************")
+
+            if status_credit_card_token != "ok":
+                raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
+
             booking.pay_uuid = pay_uuid
             booking.init_uuid = init_uuid
             db.commit()
             db.refresh(booking)
-
-            if status_credit_card_token != "ok":
-                raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
 
         payload = {
             "language": "ru",
@@ -932,26 +944,24 @@ class ETGOstrovokManager:
                 db.commit()
                 db.refresh(booking)
 
-            booking_info = GettingBooking(
-                id=booking.id,
-                created=to_unix_timestamp(booking.created),
-                checkin=to_unix_timestamp(booking.checkin),
-                checkout=to_unix_timestamp(booking.checkout),
-                hotel_name=booking.hotel_name,
-                room_name=booking.room_name,
-                price=booking.price,
-                status=booking.status,
-                hotel_image=hids_images[booking.hotel_hid]
-            )
-            booking_infos.append(booking_info)
+            if booking.status != HotelBookingStatus.NEW:
+                booking_info = GettingBooking(
+                    id=booking.id,
+                    created=to_unix_timestamp(booking.created),
+                    checkin=to_unix_timestamp(booking.checkin),
+                    checkout=to_unix_timestamp(booking.checkout),
+                    hotel_name=booking.hotel_name,
+                    room_name=booking.room_name,
+                    price=booking.price,
+                    status=booking.status,
+                    hotel_image=hids_images[booking.hotel_hid]
+                )
+                booking_infos.append(booking_info)
 
 
 
 
         return booking_infos
-
-
-
 
 
 ostrovok_manager = ETGOstrovokManager()

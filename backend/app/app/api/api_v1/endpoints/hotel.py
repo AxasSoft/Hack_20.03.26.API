@@ -67,15 +67,15 @@ def get_hotels(
     )
 
 
-@router.get(
-    '/raw_hotels/{hotel_hid}/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Страница отеля",
-    description="""параметр guests: 2 - число взрослых /
-2and10.14 - двое взрослых и двое детей 10 и 14 лет /
-2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
-    tags=["Мобильное приложение / Отели"]
-)
+# @router.get(
+#     '/raw_hotels/{hotel_hid}/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Страница отеля",
+#     description="""параметр guests: 2 - число взрослых /
+# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+#     tags=["Мобильное приложение / Отели"]
+# )
 def raw_get_hotel(
         # db: Session = Depends(deps.get_db),
         hotel_hid: int = Path(..., title="Идентификатор отеля"),
@@ -88,12 +88,12 @@ def raw_get_hotel(
     return JSONResponse(content=resp)
 
 
-@router.get(
-    '/prebooking/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Пред бронирование",
-    tags=["Мобильное приложение / Отели"]
-)
+# @router.get(
+#     '/prebooking/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Пред бронирование",
+#     tags=["Мобильное приложение / Отели"]
+# )
 def raw_prebooking(
         # db: Session = Depends(deps.get_db),
         booking_hash: str = Query(..., title="Хэш брони"),
@@ -144,12 +144,12 @@ def get_hotel(
 
 
 
-@router.get(
-    '/create_booking/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Создать бронирование",
-    tags=["Мобильное приложение / Отели"]
-)
+# @router.get(
+#     '/create_booking/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Создать бронирование",
+#     tags=["Мобильное приложение / Отели"]
+# )
 def raw_create_booking(
         # db: Session = Depends(deps.get_db),
         booking_hash: str = Query(..., title="Хэш брони"),
@@ -159,12 +159,12 @@ def raw_create_booking(
     return JSONResponse(content=resp)
 
 
-@router.post(
-    '/create_credit_card_token/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Создать токен кредитной карты",
-    tags=["Мобильное приложение / Отели"]
-)
+# @router.post(
+#     '/create_credit_card_token/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Создать токен кредитной карты",
+#     tags=["Мобильное приложение / Отели"]
+# )
 def raw_create_credit_card_token(
         # db: Session = Depends(deps.get_db),
         object_id: str,
@@ -186,12 +186,12 @@ def raw_create_credit_card_token(
     return JSONResponse(content=resp)
 
 
-@router.post(
-    '/raw_booking_hotel/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Забронировать отель",
-    tags=["Мобильное приложение / Отели"]
-)
+# @router.post(
+#     '/raw_booking_hotel/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Забронировать отель",
+#     tags=["Мобильное приложение / Отели"]
+# )
 def raw_booking_hotel(
         # db: Session = Depends(deps.get_db),
         partner_order_id: str,
@@ -215,13 +215,13 @@ def raw_booking_hotel(
     return JSONResponse(content=resp)
 
 
-@router.get(
-    '/raw_check_booking/',
-    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Сырой запрос - Создать бронирование",
-    tags=["Мобильное приложение / Отели"]
-)
-def raw_create_booking(
+# @router.get(
+#     '/raw_check_booking/',
+#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Сырой запрос - Проверить бронирование",
+#     tags=["Мобильное приложение / Отели"]
+# )
+def raw_check_booking(
         # db: Session = Depends(deps.get_db),
         partner_order_id: str = Query(..., title="бронь"),
         current_user: models.User = Depends(deps.get_current_active_user)
@@ -230,16 +230,16 @@ def raw_create_booking(
     return JSONResponse(content=resp)
 
 
-@router.get(
-    '/hotels_by_hids/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-    name="Поиск отелей по id",
-    description="""параметр guests: 2 - число взрослых /
-2and10.14 - двое взрослых и двое детей 10 и 14 лет /
-2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
-    tags=["Мобильное приложение / Отели"]
-)
-def get_hotels(
+# @router.get(
+#     '/hotels_by_hids/',
+#     response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+#     name="Поиск отелей по id",
+#     description="""параметр guests: 2 - число взрослых /
+# 2and10.14 - двое взрослых и двое детей 10 и 14 лет /
+# 2-3and7 - два номера в одном 2 взрослых, в другом 3 взрослых и ребенок 7 лет""",
+#     tags=["Мобильное приложение / Отели"]
+# )
+def get_hotels_by_hids(
         checkin: int = Query(..., title='Дата заезда'),
         checkout: int = Query(..., title='Дата выезда'),
         guests: str = Query(..., title="Количество гостей"),
@@ -284,7 +284,7 @@ def raw_get_test_hotel(
 
 @router.get(
     '/set_bookings/',
-    name="Бронирования",
+    name="Сырой запрос - Бронирования",
     tags=["Мобильное приложение / Отели"]
 )
 def set_bookings(
@@ -333,6 +333,12 @@ def secure_check(
     name="Начать бронирование",
     tags=["Мобильное приложение / Отели"]
 )
+@router.post(
+    '/cp/start_booking_hotel/',
+    response_model=schemas.SingleEntityResponse[schemas.CreatingBooking],
+    name="Начать бронирование",
+    tags=["Административная панель / Отели"]
+)
 def start_booking(
         data: schemas.BookingHashData,
         checkin: int = Query(..., title='Дата заезда'),
@@ -355,6 +361,12 @@ def start_booking(
     response_model=schemas.SingleEntityResponse[schemas.CreatingBooking],
     name="Закончить бронирование",
     tags=["Мобильное приложение / Отели"]
+)
+@router.post(
+    '/cp/finish_booking_hotel/',
+    response_model=schemas.SingleEntityResponse[schemas.CreatingBooking],
+    name="Закончить бронирование",
+    tags=["Административная панель / Отели"]
 )
 def finish_booking(
         data: schemas.FinishBooking,
