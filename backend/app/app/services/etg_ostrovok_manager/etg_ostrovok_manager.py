@@ -810,7 +810,7 @@ class ETGOstrovokManager:
                 "guests": [
                     {
                         "first_name": "Гость",
-                        "last_name": "1",
+                        "last_name": "Гость",
                     }
                 ]
                 }
