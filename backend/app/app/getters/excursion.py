@@ -46,6 +46,7 @@ def get_excursion(db: Session, excursion: Excursion) -> GettingExcursion:
         ],
         reviews = [get_excursion_review(review) for review in reviews]
     )
+    return result
 
 
 def get_cp_excursion(db: Session, excursion: Excursion) -> GettingCPExcursion:
