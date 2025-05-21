@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from .id_model import IdModel
 from .credit_card import CreditCardWithCvc
+from app.enums.hotel_booking_status import HotelBookingStatus
 
 
 class RoomGuests(BaseModel):
@@ -146,7 +147,7 @@ class GettingBooking(BaseModel):
     hotel_name: str
     room_name: str
     price: int
-    status: str
+    status: HotelBookingStatus
     hotel_image: Optional[str]
 
 
