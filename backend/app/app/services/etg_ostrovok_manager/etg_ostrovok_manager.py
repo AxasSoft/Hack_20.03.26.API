@@ -797,15 +797,15 @@ class ETGOstrovokManager:
                 {
                 "guests": [
                     {
-                        "first_name": "Аа",
-                        "last_name": "Аа",
+                        "first_name": "Гость",
+                        "last_name": "1",
                     }
                 ]
                 }
             ],
             "user": {
-                "email": "s.pashov@axas.ru",
-                "phone": "79024066769"
+                "email": user_data.email,
+                "phone": user_data.phone
             },
             "supplier_data": {
                 "first_name_original": user_data.first_name,
