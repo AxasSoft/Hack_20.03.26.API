@@ -366,3 +366,18 @@ def finish_booking(
                                            db=db
                                            )
     return schemas.SingleEntityResponse(data=hotel_booking)
+
+
+@router.get(
+    '/test_hotel_dump/',
+    name="Дамп тест отеля",
+    tags=["Мобильное приложение / Отели"]
+)
+def test_hotel_dump(
+        current_user: models.User = Depends(deps.get_current_active_user),
+):
+    resp = ostrovok_manager.raw_get_test_hotel_dump()
+    print(resp)
+    return JSONResponse(content=resp)
+
+

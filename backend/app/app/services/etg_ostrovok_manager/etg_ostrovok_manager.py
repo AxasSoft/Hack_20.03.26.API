@@ -15,9 +15,9 @@ from app.utils.security import generate_random_password
 from app.exceptions import UnprocessableEntity, UnfoundEntity
 from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
                                AvailableRoom, HotelComfortChapter, ClientBookingData, PreCreatedBooking,
-                               CreatedBooking, BookingUserData, CreatingBooking)
+                               CreatedBooking, BookingUserData, CreatingBooking, GettingBooking)
 from app.schemas.credit_card import CreditCardData, CreditCardWithCvc
-from app.utils.datetime import from_unix_timestamp
+from app.utils.datetime import from_unix_timestamp, to_unix_timestamp
 from app.utils.pagination import get_page_no_db
 from app.models import HotelBooking
 from app import crud
@@ -87,18 +87,54 @@ class ETGOstrovokManager:
         }
         response = requests.post(
             self.search_by_region_url,
-            # auth=HTTPBasicAuth(settings.ETG_KEY_ID, settings.ETG_API_KEY),
             headers=headers,
             json=payload
         ).json()
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        hotels_hids = []
+        hotels_hids = [8473727, ]
         # if in cash:
         # hotels_user_hids = cash
         # hotels_user_hids_page = pafinator
         hotels_getting_data = {}  # {'hid': data_obj}
+
+
+        # Получение номеров тестового отеля
+        payload = {
+            "checkin": checkin_date,
+            "checkout": checkout_date,
+            "id": "test_hotel_do_not_book"
+        }
+        if guests:
+            payload["guests"] = [
+                guest.dict(exclude_unset=True) for guest in guests
+            ]
+        logging.info("Payload for test hotel: %s", payload)
+        print("Payload for test hotel: %s", payload)
+
+        test_hotel_response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/search/hp/",
+            headers=headers,
+            json=payload
+        ).json()
+        test_hotel_api_data = test_hotel_response["data"]["hotels"][0]
+        hotel_getting_data = GettingHotelSearchInfo()
+        hotel_getting_data.hid = test_hotel_api_data["hid"]
+
+        first_rate = test_hotel_api_data["rates"][0]
+        first_rate_payment = first_rate["payment_options"]["payment_types"][0]
+
+        hotel_getting_data.meal_included = False if first_rate["meal_data"]["value"] == "nomeal" else True
+        hotel_getting_data.card_payment = True if first_rate_payment["by"] == "credit_card" else False
+        hotel_getting_data.free_cancellation = True if first_rate_payment["cancellation_penalties"][
+            "free_cancellation_before"] \
+            else False
+        hotel_getting_data.room_name = first_rate["room_name"]
+        hotel_getting_data.price = first_rate_payment["show_amount"]
+        hotel_getting_data.currency = first_rate_payment["currency_code"]
+        hotels_getting_data[test_hotel_api_data["hid"]] = hotel_getting_data
+
         for available_hotel in response["data"]["hotels"]:
             # if hotels_user_hids_page
             # and available_hotel["hid"] not in hotels_user_hids_page
@@ -131,7 +167,6 @@ class ETGOstrovokManager:
                         obj.name = hotel_data.get("name")
                         image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE)
                         obj.image = image_url
-                        'aaa'.replace('s', 'dd')
 
                         hotel_comfort = []
                         for amenity_group in hotel_data.get("amenity_groups"):
@@ -577,7 +612,11 @@ class ETGOstrovokManager:
         if "data" not in response:
             logging.info("ETG response: %s", response)
 
-        return response
+        if response["status"] == "ok":
+            return response["status"]
+        else:
+            raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
+
 
 
     def secure_check(
@@ -639,8 +678,8 @@ class ETGOstrovokManager:
         new_book_hash = first_rate["book_hash"]
         pre_book_data = PreCreatedBooking(
             hotel_hid=response["data"]["hotels"][0]["hid"],
-            hotel_name=first_rate["room_name"],
-            room_name=first_rate["legal_info"]["hotel"]["name"]
+            room_name=first_rate["room_name"],
+            hotel_name=first_rate["legal_info"]["hotel"]["name"]
         )
         return new_book_hash, match_hash, pre_book_data
 
@@ -804,6 +843,112 @@ class ETGOstrovokManager:
             )
         else:
             raise UnprocessableEntity(message="Что-то пошло не так")
+
+
+    def raw_get_test_hotel_dump(
+            self,
+    ):
+        payload = {
+            "id": "test_hotel_do_not_book",
+            "language": "ru",
+        }
+        logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/info/",
+            headers=headers,
+            json=payload
+        ).json()
+        if "data" not in response:
+            logging.info("ETG response: %s", response)
+
+        return response
+
+
+    def get_bookings_info(
+            self,
+            db: Session,
+            bookings: List[HotelBooking],
+            page: int
+    ):
+        bookings_dict = {}  # { order_id: HotelBooking }
+        order_ids = []
+        hids_images = {}
+        for booking in bookings:
+            order_ids.append(booking.order_id)
+            hids_images[booking.hotel_hid] = None
+            bookings_dict[booking.order_id] = booking
+
+        # Получение фото из дампа
+        try:
+            with open(DUMP_PATH, "r", encoding="utf-8") as file:
+                for line in file:
+                    hotel_data = json.loads(line.strip())
+                    if hotel_data.get("hid") in hids_images:
+                        image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE)
+                        hids_images[hotel_data.get("hid")] = image_url
+        except Exception as e:
+            print(e)
+
+        payload = {
+            "ordering": {
+                "ordering_type": "desc",
+                "ordering_by": "created_at"
+            },
+            "pagination": {
+                "page_size": "30",
+                "page_number": page
+            },
+            "search": {
+                "order_ids": order_ids
+            },
+            "language": "ru",
+        }
+        logging.info("Payload for search: %s", payload)
+        print("Payload for search: %s", payload)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {self.encoded_credentials}"
+        }
+        response = requests.post(
+            "https://api.worldota.net/api/b2b/v3/hotel/order/info/",
+            headers=headers,
+            json=payload
+        ).json()
+
+        booking_infos = []
+        for order in response["data"]["orders"]:
+            booking = bookings_dict[order["order_id"]]
+            print(booking.status)
+            if order["status"] not in ("noshow", "failed") and order["status"] != booking.status:
+                booking.status = order["status"]
+                db.add(booking)
+                db.commit()
+                db.refresh(booking)
+
+            booking_info = GettingBooking(
+                id=booking.id,
+                created=to_unix_timestamp(booking.created),
+                checkin=to_unix_timestamp(booking.checkin),
+                checkout=to_unix_timestamp(booking.checkout),
+                hotel_name=booking.hotel_name,
+                room_name=booking.room_name,
+                price=booking.price,
+                status=booking.status,
+                hotel_image=hids_images[booking.hotel_hid]
+            )
+            booking_infos.append(booking_info)
+
+
+
+
+        return booking_infos
 
 
 

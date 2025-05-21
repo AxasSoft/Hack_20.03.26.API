@@ -138,6 +138,20 @@ class FinishBooking(BaseModel):
     user_data: BookingUserData
 
 
+class GettingBooking(BaseModel):
+    id: int
+    created: int
+    checkin: int
+    checkout: int
+    hotel_name: str
+    room_name: str
+    price: int
+    status: str
+    hotel_image: Optional[str]
+
+
+
+
 
 
 

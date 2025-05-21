@@ -11,6 +11,7 @@ from app.api import deps
 from app.schemas.response import Meta, OkResponse
 from app.enums.excursion_booking_status import ExcursionBookingStatus
 from ....exceptions import UnprocessableEntity, UnfoundEntity, ListOfEntityError, InaccessibleEntity
+from app.services.etg_ostrovok_manager.etg_ostrovok_manager import ostrovok_manager
 import logging
 
 
@@ -237,3 +238,104 @@ def cancel_excursion_booking(
 ):
     cache.delete_by_prefix('event_by_user')
     return None
+
+
+@router.get(
+    '/users/me/bookings/hotels/',
+    response_model=schemas.ListOfEntityResponse[schemas.GettingBooking],
+    name="Получить бронирования отелей текущего пользователя",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Пользователь не найден'
+        }
+    },
+    tags=["Мобильное приложение / Бронирования"]
+)
+def get_hotel_bookings_by_user(
+        db: Session = Depends(deps.get_db),
+        page: Optional[int] = Query(1, title="Номер страницы"),
+        current_user: models.User = Depends(deps.get_current_active_user),
+        cache: Cache = Depends(deps.get_cache_list),
+):
+    # ПРОДУМАТЬ РАБОТУ С КЭШЕМ
+    # def fatch_stories():
+    #     data, paginator = crud.hotel_booking.get_bookings_by_user(
+    #         db,
+    #         user=current_user,
+    #         page=page)
+    #
+    #     return schemas.ListOfEntityResponse(
+    #         data=[getters.excursion_booking.get_excursion_booking(excursion_booking=booking) for booking in data],
+    #         meta=Meta(paginator=paginator)
+    #     )
+    #
+    # # key_tuple = ('hotel_booking_by_user', f"user - {current_user.id} - page - {page}")
+    # data, from_cache = cache.behind_cache(key_tuple, fatch_stories, ttl=7200)
+    # if from_cache:
+    #     logging.info("From the cache")
+    # else:
+    #     logging.info("From the database")
+
+    data, paginator = crud.hotel_booking.get_bookings_by_user(
+        db,
+        user=current_user,
+        page=page)
+    bookings = ostrovok_manager.get_bookings_info(db=db, page=page, bookings=data)
+
+    return schemas.ListOfEntityResponse(
+        data=bookings,
+        meta=Meta(paginator=paginator)
+    )
+
+
+@router.put(
+    '/users/me/bookings/hotels/{hotel_booking_id}/cancel/',
+    response_model=schemas.SingleEntityResponse,
+    name="Отменить бронирование отеля",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Бронирование отеля не найдено'
+        }
+    },
+    tags=["Мобильное приложение / Бронирования"]
+)
+def cancel_booking(
+        hotel_booking_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        cache: Cache = Depends(deps.get_cache_list),
+):
+    hotel_booking = crud.hotel_booking.get_by_id(db, id=hotel_booking_id)
+    if hotel_booking is None:
+        raise UnfoundEntity(
+            message="Бронирование отеля не найдено"
+        )
+    resp = bookings = ostrovok_manager.cancel_booking(partner_order_id=hotel_booking.partner_order_id)
+    return schemas.SingleEntityResponse(
+        message=resp
+    )
