@@ -32,6 +32,6 @@ def downgrade():
     op.drop_column('hotelbooking', 'has_free_cancellation')
     op.execute("ALTER TABLE hotelbooking ALTER COLUMN status TYPE TEXT")
     op.execute("DROP TYPE hotelbookingstatus")
-    op.execute("CREATE TYPE hotelbookingstatus AS ENUM('new', 'cancelled', 'rejected', 'completed')")
+    op.execute("CREATE TYPE hotelbookingstatus AS ENUM('NEW', 'CANCELLED', 'REJECTED', 'COMPLETED')")
     op.execute("ALTER TABLE hotelbooking ALTER COLUMN status TYPE hotelbookingstatus USING status::hotelbookingstatus")
     # ### end Alembic commands ###

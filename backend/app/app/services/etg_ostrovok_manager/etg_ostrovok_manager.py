@@ -1050,7 +1050,7 @@ class ETGOstrovokManager:
             with open(DUMP_PATH, "r", encoding="utf-8") as file:
                 for line in file:
                     hotel_data = json.loads(line.strip())
-                    if hotel_data.get("hid") in booking.hotel_hid:
+                    if hotel_data.get("hid") == booking.hotel_hid:
                         hotel_images = [
                             image_url.replace('{size}', PICT_SIZE) for image_url in hotel_data.get("images")
                         ]
