@@ -62,6 +62,7 @@ class ETGOstrovokManager:
 
             if status == "ok":
                 booking.status = HotelBookingStatus.COMPLETED
+                db.add(booking)
                 db.commit()
                 print('*****     CHECKING STATUS OK    *****')
                 stop_event.set()
@@ -74,13 +75,13 @@ class ETGOstrovokManager:
                     print('*****     CHECKING STATUS PAY_ERROR    *****')
                 else:
                     booking.status = HotelBookingStatus.PAY_ERROR
+                    db.add(booking)
                     db.commit()
                     print('*****     CHECKING STATUS API_ERROR    *****')
                 stop_event.set()
                 return
 
             if status == "3ds":
-                print("3ds")
                 self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
                 print('*****     MAKE PAYMENT    *****')
 
