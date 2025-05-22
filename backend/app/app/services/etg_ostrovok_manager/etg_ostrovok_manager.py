@@ -160,22 +160,25 @@ class ETGOstrovokManager:
             headers=headers,
             json=payload
         ).json()
-        test_hotel_api_data = test_hotel_response["data"]["hotels"][0]
-        hotel_getting_data = GettingHotelSearchInfo()
-        hotel_getting_data.hid = test_hotel_api_data["hid"]
+        if test_hotel_response["data"]["hotels"]:
+            test_hotel_api_data = test_hotel_response["data"]["hotels"][0]
+            hotel_getting_data = GettingHotelSearchInfo()
+            hotel_getting_data.hid = test_hotel_api_data["hid"]
 
-        first_rate = test_hotel_api_data["rates"][0]
-        first_rate_payment = first_rate["payment_options"]["payment_types"][0]
+            first_rate = test_hotel_api_data["rates"][0]
+            first_rate_payment = first_rate["payment_options"]["payment_types"][0]
 
-        hotel_getting_data.meal_included = False if first_rate["meal_data"]["value"] == "nomeal" else True
-        hotel_getting_data.card_payment = True if first_rate_payment["by"] == "credit_card" else False
-        hotel_getting_data.free_cancellation = True if first_rate_payment["cancellation_penalties"][
-            "free_cancellation_before"] \
-            else False
-        hotel_getting_data.room_name = first_rate["room_name"]
-        hotel_getting_data.price = first_rate_payment["show_amount"]
-        hotel_getting_data.currency = first_rate_payment["currency_code"]
-        hotels_getting_data[test_hotel_api_data["hid"]] = hotel_getting_data
+            hotel_getting_data.meal_included = False if first_rate["meal_data"]["value"] == "nomeal" else True
+            hotel_getting_data.card_payment = True if first_rate_payment["by"] == "credit_card" else False
+            hotel_getting_data.free_cancellation = True if first_rate_payment["cancellation_penalties"][
+                "free_cancellation_before"] \
+                else False
+            hotel_getting_data.room_name = first_rate["room_name"]
+            hotel_getting_data.price = first_rate_payment["show_amount"]
+            hotel_getting_data.currency = first_rate_payment["currency_code"]
+            hotels_getting_data[test_hotel_api_data["hid"]] = hotel_getting_data
+        else:
+            hotels_hids = []
 
         for available_hotel in response["data"]["hotels"]:
             # if hotels_user_hids_page
