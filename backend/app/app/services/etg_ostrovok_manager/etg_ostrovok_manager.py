@@ -566,6 +566,7 @@ class ETGOstrovokManager:
         print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
+        print(response.json())
 
         return response.json()
 
