@@ -810,8 +810,8 @@ class ETGOstrovokManager:
                 {
                 "guests": [
                     {
-                        "first_name": "Гость",
-                        "last_name": "Гость",
+                        "first_name": user_data.first_name,
+                        "last_name": user_data.last_name,
                     }
                 ]
                 }
@@ -849,9 +849,9 @@ class ETGOstrovokManager:
 
         resp = response.json()
         if resp["status"] == "ok" or resp["error"] in ("unknown", "timeout"):
-            check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
-            if check["status"] == "3ds":
-                print('PLATI!')
+            # check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
+            # if check["status"] == "3ds":
+            #     print('PLATI!')
             #     self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
             return CreatingBooking(
                 is_need_credit_card_data=booking.is_need_credit_card_data,
