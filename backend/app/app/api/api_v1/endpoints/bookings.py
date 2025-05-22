@@ -309,7 +309,7 @@ def cancel_booking(
 
 
 @router.get(
-    '/users/{user_id}/bookings/hotels/',
+    '/cp/users/{user_id}/bookings/hotels/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingBooking],
     name="Получить бронирования отелей текущего пользователя",
     responses={
@@ -330,7 +330,7 @@ def cancel_booking(
             'description': 'Пользователь не найден'
         }
     },
-    tags=["Мобильное приложение / Бронирования"]
+    tags=["Административная панель / Бронирования"]
 )
 def get_hotel_bookings_by_user(
         db: Session = Depends(deps.get_db),
@@ -377,7 +377,7 @@ def get_hotel_bookings_by_user(
             'description': 'Бронирование отеля не найдено'
         }
     },
-    tags=["Мобильное приложение / Бронирования"]
+    tags=["Административная панель / Бронирования"]
 )
 def cancel_booking(
         hotel_booking_id: int = Path(...),
@@ -393,3 +393,43 @@ def cancel_booking(
     return schemas.SingleEntityResponse(
         message=resp
     )
+
+
+@router.get(
+    '/users/me/bookings/hotels/{hotel_booking_id}/',
+    response_model=schemas.SingleEntityResponse[schemas.GettingDetailBooking],
+    name="Получить бронирование",
+    responses={
+        400: {
+            'model': schemas.OkResponse,
+            'description': 'Переданны невалидные данные'
+        },
+        422: {
+            'model': schemas.OkResponse,
+            'description': 'Переданные некорректные данные'
+        },
+        403: {
+            'model': schemas.OkResponse,
+            'description': 'Отказанно в доступе'
+        },
+        404: {
+            'model': schemas.OkResponse,
+            'description': 'Пользователь не найден'
+        }
+    },
+    tags=["Мобильное приложение / Бронирования"]
+)
+def get_hotel_booking(
+        hotel_booking_id: int = Path(...),
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+        cache: Cache = Depends(deps.get_cache_list),
+):
+    hotel_booking = crud.hotel_booking.get_by_id(db, id=hotel_booking_id)
+    if hotel_booking is None:
+        raise UnfoundEntity(
+            message="Бронирование отеля не найдено"
+        )
+    data = ostrovok_manager.get_booking(db=db, booking=hotel_booking)
+
+    return schemas.SingleEntityResponse(data=data)

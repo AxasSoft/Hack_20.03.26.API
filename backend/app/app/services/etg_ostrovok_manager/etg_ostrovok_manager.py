@@ -1,10 +1,13 @@
 import json
 import logging
 from http.client import responses
+import time
+import threading
 import uuid
 from typing import Optional, List, Union
 import requests
 import base64
+from datetime import datetime
 from requests.auth import HTTPBasicAuth
 import os
 from sqlalchemy.orm import Session
@@ -15,7 +18,7 @@ from app.utils.security import generate_random_password
 from app.exceptions import UnprocessableEntity, UnfoundEntity
 from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
                                AvailableRoom, HotelComfortChapter, ClientBookingData, PreCreatedBooking,
-                               CreatedBooking, BookingUserData, CreatingBooking, GettingBooking)
+                               CreatedBooking, BookingUserData, CreatingBooking, GettingBooking, GettingDetailBooking)
 from app.schemas.credit_card import CreditCardData, CreditCardWithCvc
 from app.utils.datetime import from_unix_timestamp, to_unix_timestamp
 from app.utils.pagination import get_page_no_db
@@ -44,6 +47,43 @@ class ETGOstrovokManager:
         self.region_id = 965821545
         self.search_by_region_url = "https://api.worldota.net/api/b2b/v3/search/serp/region/"
         self.encoded_credentials = base64.b64encode(f"{self.KEY_ID}:{self.API_KEY}".encode("ascii")).decode("ascii")
+
+    def _check_status_in_thread(self, partner_order_id: str, stop_event: threading.Event, db: Session):
+        """
+        Функция, которая будет выполняться в отдельном потоке для проверки статуса.
+        """
+        print('*****     CHECKING THREAD START    *****')
+        booking = crud.hotel_booking.get_by(db=db, partner_order_id=partner_order_id)
+        print(booking)
+        while not stop_event.is_set():
+            time.sleep(5)
+            check = self.raw_check_booking(partner_order_id=partner_order_id)
+            status = check.get("status")
+
+            if status == "ok":
+                booking.status = HotelBookingStatus.COMPLETED
+                db.commit()
+                print('*****     CHECKING STATUS OK    *****')
+                stop_event.set()
+                return
+
+            if status == "error":
+                if check["error"] in ("block", "3ds", "charge"):
+                    booking.status = HotelBookingStatus.PAY_ERROR
+                    db.commit()
+                    print('*****     CHECKING STATUS PAY_ERROR    *****')
+                else:
+                    booking.status = HotelBookingStatus.PAY_ERROR
+                    db.commit()
+                    print('*****     CHECKING STATUS API_ERROR    *****')
+                stop_event.set()
+                return
+
+            if status == "3ds":
+                print("3ds")
+                self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
+                print('*****     MAKE PAYMENT    *****')
+
 
     def parse_guests_query(self, guests_str: str) -> List[RoomGuests]:
         try:
@@ -294,6 +334,11 @@ class ETGOstrovokManager:
             price = room["payment_options"]["payment_types"][0]["amount"]
             is_payment_now = True if room["payment_options"]["payment_types"][0]["type"] == "now" else False
             is_need_credit_card_data = room["payment_options"]["payment_types"][0]["is_need_credit_card_data"]
+            free_cancellation_before = room["payment_options"]["payment_types"][0]["cancellation_penalties"]["free_cancellation_before"]
+            if free_cancellation_before:
+                free_cancellation_before = to_unix_timestamp(
+                    datetime.strptime(free_cancellation_before, "%Y-%m-%dT%H:%M:%S"))
+            has_free_cancellation = True if free_cancellation_before else False
             room_name = room["room_name"]
             images = []
             for hotel_room in hotel_dum_data["room_groups"]:
@@ -305,7 +350,9 @@ class ETGOstrovokManager:
                                                  book_hash=room["book_hash"],
                                                  match_hash=room["match_hash"],
                                                  is_payment_now=is_payment_now,
-                                                 is_need_credit_card_data=is_need_credit_card_data))
+                                                 is_need_credit_card_data=is_need_credit_card_data,
+                                                 free_cancellation_before=free_cancellation_before,
+                                                 has_free_cancellation=has_free_cancellation))
         response_info.available_rooms = available_rooms
 
         return response_info
@@ -397,6 +444,7 @@ class ETGOstrovokManager:
             raise UnprocessableEntity(message="Что-то пошло не так")
 
         return response["status"]
+
 
     def raw_booking_hotel(
             self,
@@ -689,10 +737,16 @@ class ETGOstrovokManager:
 
         match_hash = first_rate["match_hash"]
         new_book_hash = first_rate["book_hash"]
+        free_cancellation_before = first_rate["payment_options"]["payment_types"][0]["cancellation_penalties"]["free_cancellation_before"]
+        if free_cancellation_before:
+            free_cancellation_before = from_unix_timestamp(to_unix_timestamp(
+                datetime.strptime(free_cancellation_before, "%Y-%m-%dT%H:%M:%S")))
         pre_book_data = PreCreatedBooking(
             hotel_hid=response["data"]["hotels"][0]["hid"],
             room_name=first_rate["room_name"],
-            hotel_name=first_rate["legal_info"]["hotel"]["name"]
+            hotel_name=first_rate["legal_info"]["hotel"]["name"],
+            free_cancellation_before=free_cancellation_before,
+            has_free_cancellation=True if free_cancellation_before else False
         )
         return new_book_hash, match_hash, pre_book_data
 
@@ -850,10 +904,17 @@ class ETGOstrovokManager:
 
         resp = response.json()
         if resp["status"] == "ok" or resp["error"] in ("unknown", "timeout"):
-            # check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
-            # if check["status"] == "3ds":
-            #     print('PLATI!')
-            #     self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
+            check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
+            if check["status"] == "processing":
+                print('****   STATUS processing   ****')
+                stop_event = threading.Event()
+                thread = threading.Thread(
+                    target=self._check_status_in_thread,
+                    args=(booking.partner_order_id, stop_event, db),
+                    daemon=True
+                )
+                thread.start()
+
             return CreatingBooking(
                 is_need_credit_card_data=booking.is_need_credit_card_data,
                 booking_id=booking.id,
@@ -960,14 +1021,61 @@ class ETGOstrovokManager:
                     room_name=booking.room_name,
                     price=booking.price,
                     status=booking.status,
-                    hotel_image=hids_images[booking.hotel_hid]
+                    hotel_image=hids_images[booking.hotel_hid],
+                    has_free_cancellation=booking.has_free_cancellation,
+                    free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before)
                 )
                 booking_infos.append(booking_info)
 
-
-
-
         return booking_infos
+
+    def get_booking(
+            self,
+            db: Session,
+            booking: HotelBooking,
+    ):
+        # bookings_dict = {}  # { order_id: HotelBooking }
+        # order_ids = []
+        # hids_images = {}
+        # for booking in bookings:
+        #     order_ids.append(booking.order_id)
+        #     hids_images[booking.hotel_hid] = None
+        #     bookings_dict[booking.order_id] = booking
+
+        # Получение фото из дампа
+        hotel_images = []
+        room_images = []
+        try:
+            with open(DUMP_PATH, "r", encoding="utf-8") as file:
+                for line in file:
+                    hotel_data = json.loads(line.strip())
+                    if hotel_data.get("hid") in booking.hotel_hid:
+                        hotel_images = [
+                            image_url.replace('{size}', PICT_SIZE) for image_url in hotel_data.get("images")
+                        ]
+                    for room in hotel_data.get("room_groups"):
+                        if room["name"] == booking.room_name:
+                            room_images = [
+                                image_url.replace('{size}', PICT_SIZE) for image_url in room.get("images")
+                            ]
+        except Exception as e:
+            print(e)
+
+        booking_info = GettingDetailBooking(
+            id=booking.id,
+            created=to_unix_timestamp(booking.created),
+            checkin=to_unix_timestamp(booking.checkin),
+            checkout=to_unix_timestamp(booking.checkout),
+            hotel_name=booking.hotel_name,
+            room_name=booking.room_name,
+            price=booking.price,
+            status=booking.status,
+            hotel_image=hotel_images,
+            has_free_cancellation=booking.has_free_cancellation,
+            free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before),
+            room_images=room_images
+        )
+        return booking_info
 
 
 ostrovok_manager = ETGOstrovokManager()

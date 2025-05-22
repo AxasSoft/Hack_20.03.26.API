@@ -5,3 +5,6 @@ class HotelBookingStatus(str, enum.Enum):
     CANCELLED = "cancelled"
     REJECTED = "rejected"
     COMPLETED = "completed"
+    PROCESSING = "processing"
+    API_ERROR = "api_error"
+    PAY_ERROR = "pay_error"

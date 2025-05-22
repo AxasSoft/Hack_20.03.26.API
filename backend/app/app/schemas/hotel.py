@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from enum import Enum
 from datetime import datetime, date
 
@@ -50,6 +50,8 @@ class AvailableRoom(BaseModel):
     match_hash: str
     is_need_credit_card_data: bool
     is_payment_now: bool
+    has_free_cancellation: bool
+    free_cancellation_before: Optional[int]
 
 
 class GettingHotelSearchInfo(BaseModel):
@@ -104,6 +106,8 @@ class PreCreatedBooking(BaseModel):
     hotel_name: str
     room_id: Optional[int]
     room_name: str
+    has_free_cancellation: bool
+    free_cancellation_before: Any  # Заменить на дату и вр
 
 
 class CreatedBooking(BaseModel):
@@ -149,6 +153,13 @@ class GettingBooking(BaseModel):
     price: int
     status: HotelBookingStatus
     hotel_image: Optional[str]
+    has_free_cancellation: bool
+    free_cancellation_before: Optional[int]
+
+class GettingDetailBooking(GettingBooking):
+    hotel_image: Optional[List[str]]
+    room_images: Optional[List[str]]
+
 
 
 
