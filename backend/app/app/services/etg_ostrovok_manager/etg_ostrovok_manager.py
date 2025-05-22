@@ -490,6 +490,7 @@ class ETGOstrovokManager:
         print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
+        print(response.json())
 
         return response.json()
 
@@ -657,6 +658,7 @@ class ETGOstrovokManager:
         print("ETG response: %s", response.content)
         if "data" not in response:
             logging.info("ETG response: %s", response)
+        print(response.json())
 
         return response.json()
 
@@ -783,7 +785,6 @@ class ETGOstrovokManager:
                 credit_card_data=user_data.card_data,
                 is_cvc_required=booking.is_need_cvc
             )
-            print("*****************")
 
             if status_credit_card_token != "ok":
                 raise UnprocessableEntity(message="Что-то пошло не так, попробуйте снова")
@@ -848,6 +849,9 @@ class ETGOstrovokManager:
 
         resp = response.json()
         if resp["status"] == "ok" or resp["error"] in ("unknown", "timeout"):
+            check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
+            if check["status"] == "3ds":
+                self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
             return CreatingBooking(
                 is_need_credit_card_data=booking.is_need_credit_card_data,
                 booking_id=booking.id,

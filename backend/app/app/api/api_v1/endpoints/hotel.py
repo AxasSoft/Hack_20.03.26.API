@@ -215,12 +215,12 @@ def raw_booking_hotel(
     return JSONResponse(content=resp)
 
 
-# @router.get(
-#     '/raw_check_booking/',
-#     # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
-#     name="Сырой запрос - Проверить бронирование",
-#     tags=["Мобильное приложение / Отели"]
-# )
+@router.get(
+    '/raw_check_booking/',
+    # response_model=schemas.ListOfEntityResponse[schemas.GettingHotelSearchInfo],
+    name="Сырой запрос - Проверить бронирование",
+    tags=["Мобильное приложение / Отели"]
+)
 def raw_check_booking(
         # db: Session = Depends(deps.get_db),
         partner_order_id: str = Query(..., title="бронь"),
