@@ -967,27 +967,28 @@ class ETGOstrovokManager:
     ):
         if not bookings:
             return []
-        order_ids = (
+        order_ids =[row[0] for row in
+            (
             db.query(HotelBooking.order_id)
             .filter(
                 HotelBooking.user_id == bookings[0].user.id,
                 HotelBooking.status != HotelBookingStatus.NEW,
             )
             .order_by(HotelBooking.created.desc())
-            .scalars()
             .all()
         )
+        ]
 
-        unique_hotel_hids = (
+        unique_hotel_hids = [row[0] for row in
+            (
             db.query(HotelBooking.hotel_hid)
             .filter(
                 HotelBooking.user_id == user.id,
                 HotelBooking.status != HotelBookingStatus.NEW,
             )
             .distinct()
-            .scalars()
             .all()
-        )
+        )]
 
         payload = {
             "ordering": {
