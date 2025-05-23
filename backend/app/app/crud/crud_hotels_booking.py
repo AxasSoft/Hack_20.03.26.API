@@ -29,8 +29,10 @@ class CRUDHotelBooking(CRUDBase[HotelBooking, CreatedBooking, CreatedBooking]):
             db.query(HotelBooking).
             filter(
                 HotelBooking.user_id == user.id,
+                HotelBooking.status != HotelBookingStatus.NEW,
             )
         ).order_by(HotelBooking.created.desc())
+
 
         return pagination.get_page(query, page)
 

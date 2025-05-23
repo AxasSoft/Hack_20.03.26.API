@@ -965,24 +965,29 @@ class ETGOstrovokManager:
             bookings: List[HotelBooking],
             page: int
     ):
-        bookings_dict = {}  # { order_id: HotelBooking }
-        order_ids = []
-        hids_images = {}
-        for booking in bookings:
-            order_ids.append(booking.order_id)
-            hids_images[booking.hotel_hid] = None
-            bookings_dict[booking.order_id] = booking
+        if not bookings:
+            return []
+        order_ids = (
+            db.query(HotelBooking.order_id)
+            .filter(
+                HotelBooking.user_id == bookings[0].user.id,
+                HotelBooking.status != HotelBookingStatus.NEW,
+            )
+            .order_by(HotelBooking.created.desc())
+            .scalars()
+            .all()
+        )
 
-        # Получение фото из дампа
-        try:
-            with open(DUMP_PATH, "r", encoding="utf-8") as file:
-                for line in file:
-                    hotel_data = json.loads(line.strip())
-                    if hotel_data.get("hid") in hids_images:
-                        image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE)
-                        hids_images[hotel_data.get("hid")] = image_url
-        except Exception as e:
-            print(e)
+        unique_hotel_hids = (
+            db.query(HotelBooking.hotel_hid)
+            .filter(
+                HotelBooking.user_id == user.id,
+                HotelBooking.status != HotelBookingStatus.NEW,
+            )
+            .distinct()
+            .scalars()
+            .all()
+        )
 
         payload = {
             "ordering": {
@@ -1011,33 +1016,132 @@ class ETGOstrovokManager:
             json=payload
         ).json()
 
-        booking_infos = []
+        actual_statuses = {}  # order_id: status
         for order in response["data"]["orders"]:
-            booking = bookings_dict[order["order_id"]]
-            print(booking.status)
-            if order["status"] not in ("noshow", "failed", "error") and order["status"] != booking.status:
-                booking.status = order["status"]
+            actual_statuses[order["order_id"]] = order["status"]
+            # booking = bookings_dict[order["order_id"]]
+            # print(booking.status)
+            # if order["status"] not in ("noshow", "failed", "error") and order["status"] != booking.status:
+            #     booking.status = order["status"]
+            #     db.add(booking)
+            #     db.commit()
+            #     db.refresh(booking)
+
+        # Получение фото из дампа
+        hids_images = {}
+        try:
+            with open(DUMP_PATH, "r", encoding="utf-8") as file:
+                for line in file:
+                    hotel_data = json.loads(line.strip())
+                    if hotel_data.get("hid") in unique_hotel_hids:
+                        image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE)
+                        hids_images[hotel_data.get("hid")] = image_url
+        except Exception as e:
+            print(e)
+
+        booking_infos = []
+        for booking in bookings:
+            if (booking.order_id in actual_statuses
+                    and (actual_statuses[booking.order_id] not in ("noshow", "failed", "error")
+                         and actual_statuses[booking.order_id] != booking.status)):
+                booking.status = actual_statuses[booking.order_id]
                 db.add(booking)
                 db.commit()
                 db.refresh(booking)
-
-            if booking.status != HotelBookingStatus.NEW:
-                booking_info = GettingBooking(
-                    id=booking.id,
-                    created=to_unix_timestamp(booking.created),
-                    checkin=to_unix_timestamp(booking.checkin),
-                    checkout=to_unix_timestamp(booking.checkout),
-                    hotel_name=booking.hotel_name,
-                    room_name=booking.room_name,
-                    price=booking.price,
-                    status=booking.status,
-                    hotel_image=hids_images[booking.hotel_hid],
-                    has_free_cancellation=booking.has_free_cancellation,
-                    free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before)
-                )
-                booking_infos.append(booking_info)
+            booking_info = GettingBooking(
+                id=booking.id,
+                created=to_unix_timestamp(booking.created),
+                checkin=to_unix_timestamp(booking.checkin),
+                checkout=to_unix_timestamp(booking.checkout),
+                hotel_name=booking.hotel_name,
+                room_name=booking.room_name,
+                price=booking.price,
+                status=booking.status,
+                hotel_image=hids_images[booking.hotel_hid],
+                has_free_cancellation=booking.has_free_cancellation,
+                free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before)
+            )
+            booking_infos.append(booking_info)
 
         return booking_infos
+
+
+        # bookings_dict = {}  # { order_id: HotelBooking }
+        # order_ids = []
+        # hids_images = {}
+        # for booking in bookings:
+        #     order_ids.append(booking.order_id)
+        #     hids_images[booking.hotel_hid] = None
+        #     bookings_dict[booking.order_id] = booking_info = GettingBooking(
+        #             id=booking.id,
+        #             created=to_unix_timestamp(booking.created),
+        #             checkin=to_unix_timestamp(booking.checkin),
+        #             checkout=to_unix_timestamp(booking.checkout),
+        #             hotel_name=booking.hotel_name,
+        #             room_name=booking.room_name,
+        #             price=booking.price,
+        #             status=booking.status,
+        #             hotel_image=None,
+        #             has_free_cancellation=booking.has_free_cancellation,
+        #             free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before)
+        #         )
+        #
+        #
+        #
+        # payload = {
+        #     "ordering": {
+        #         "ordering_type": "desc",
+        #         "ordering_by": "created_at"
+        #     },
+        #     "pagination": {
+        #         "page_size": "30",
+        #         "page_number": page
+        #     },
+        #     "search": {
+        #         "order_ids": order_ids
+        #     },
+        #     "language": "ru",
+        # }
+        # logging.info("Payload for search: %s", payload)
+        # print("Payload for search: %s", payload)
+        #
+        # headers = {
+        #     "Content-Type": "application/json",
+        #     "Authorization": f"Basic {self.encoded_credentials}"
+        # }
+        # response = requests.post(
+        #     "https://api.worldota.net/api/b2b/v3/hotel/order/info/",
+        #     headers=headers,
+        #     json=payload
+        # ).json()
+        #
+        # booking_infos = []
+        # for order in response["data"]["orders"]:
+        #     booking = bookings_dict[order["order_id"]]
+        #     print(booking.status)
+        #     if order["status"] not in ("noshow", "failed", "error") and order["status"] != booking.status:
+        #         booking.status = order["status"]
+        #         db.add(booking)
+        #         db.commit()
+        #         db.refresh(booking)
+        #
+        #     if booking.status != HotelBookingStatus.NEW:
+        #         booking_info = GettingBooking(
+        #             id=booking.id,
+        #             created=to_unix_timestamp(booking.created),
+        #             checkin=to_unix_timestamp(booking.checkin),
+        #             checkout=to_unix_timestamp(booking.checkout),
+        #             hotel_name=booking.hotel_name,
+        #             room_name=booking.room_name,
+        #             price=booking.price,
+        #             status=booking.status,
+        #             hotel_image=hids_images[booking.hotel_hid],
+        #             has_free_cancellation=booking.has_free_cancellation,
+        #             free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before)
+        #         )
+        #         booking_infos.append(booking_info)
+        #
+        # return booking_infos
 
     def get_booking(
             self,
