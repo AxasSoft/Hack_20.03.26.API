@@ -983,7 +983,7 @@ class ETGOstrovokManager:
             (
             db.query(HotelBooking.hotel_hid)
             .filter(
-                HotelBooking.user_id == user.id,
+                HotelBooking.user_id == bookings[0].user.id,
                 HotelBooking.status != HotelBookingStatus.NEW,
             )
             .distinct()
