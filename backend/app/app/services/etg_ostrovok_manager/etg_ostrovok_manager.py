@@ -56,6 +56,7 @@ class ETGOstrovokManager:
         booking = crud.hotel_booking.get_by(db=db, partner_order_id=partner_order_id)
         print(booking)
         while not stop_event.is_set():
+            print(f'*****     CHECKING booling {booking.id}    *****')
             time.sleep(5)
             check = self.raw_check_booking(partner_order_id=partner_order_id)
             status = check.get("status")
@@ -74,7 +75,7 @@ class ETGOstrovokManager:
                     db.commit()
                     print('*****     CHECKING STATUS PAY_ERROR    *****')
                 else:
-                    booking.status = HotelBookingStatus.PAY_ERROR
+                    booking.status = HotelBookingStatus.API_ERROR
                     db.add(booking)
                     db.commit()
                     print('*****     CHECKING STATUS API_ERROR    *****')
@@ -335,7 +336,7 @@ class ETGOstrovokManager:
 
         available_rooms = []
         for room in hotel_api_data["rates"]:
-            price = room["payment_options"]["payment_types"][0]["amount"]
+            price = room["payment_options"]["payment_types"][0]["show_amount"]
             is_payment_now = True if room["payment_options"]["payment_types"][0]["type"] == "now" else False
             is_need_credit_card_data = room["payment_options"]["payment_types"][0]["is_need_credit_card_data"]
             free_cancellation_before = room["payment_options"]["payment_types"][0]["cancellation_penalties"]["free_cancellation_before"]
@@ -709,11 +710,11 @@ class ETGOstrovokManager:
         print("Response headers: %s", response.headers)
         logging.info("ETG response: %s", response.content)
         print("ETG response: %s", response.content)
-        if "data" not in response:
-            logging.info("ETG response: %s", response)
-        print(response.json())
-
-        return response.json()
+        # if "data" not in response:
+        #     logging.info("ETG response: %s", response)
+        # print(response.json())
+        #
+        # return response.json()
 
 
     def prebooking(
@@ -911,6 +912,11 @@ class ETGOstrovokManager:
             check = self.raw_check_booking(partner_order_id=booking.partner_order_id)
             if check["status"] == "processing":
                 print('****   STATUS processing   ****')
+                booking.status = HotelBookingStatus.PROCESSING
+                db.add(booking)
+                db.commit()
+                db.refresh(booking)
+
                 stop_event = threading.Event()
                 thread = threading.Thread(
                     target=self._check_status_in_thread,
@@ -1009,7 +1015,7 @@ class ETGOstrovokManager:
         for order in response["data"]["orders"]:
             booking = bookings_dict[order["order_id"]]
             print(booking.status)
-            if order["status"] not in ("noshow", "failed") and order["status"] != booking.status:
+            if order["status"] not in ("noshow", "failed", "error") and order["status"] != booking.status:
                 booking.status = order["status"]
                 db.add(booking)
                 db.commit()
