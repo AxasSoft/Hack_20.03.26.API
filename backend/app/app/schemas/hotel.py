@@ -81,6 +81,7 @@ class GettingHotelBookingInfo(BaseModel):
     lat: Optional[float]
     lon: Optional[float]
     available_rooms: Optional[List[AvailableRoom]]
+    extra_info: Optional[str]
 
 
 class ClientBookingData(BaseModel):

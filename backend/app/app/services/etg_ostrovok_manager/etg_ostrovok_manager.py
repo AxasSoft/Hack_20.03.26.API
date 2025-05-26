@@ -318,7 +318,8 @@ class ETGOstrovokManager:
             lat=hotel_dum_data["latitude"],
             lon=hotel_dum_data["longitude"],
             phone=hotel_dum_data["phone"],
-            email=hotel_dum_data["email"]
+            email=hotel_dum_data["email"],
+            extra_info=hotel_dum_data["metapolicy_extra_info"]
         )
         hotel_images = []
         for image in hotel_dum_data["images"]:
