@@ -55,8 +55,10 @@ class ETGOstrovokManager:
         print('*****     CHECKING THREAD START    *****')
         booking = crud.hotel_booking.get_by(db=db, partner_order_id=partner_order_id)
         print(booking)
+        payment_request_is_completed = False
+
         while not stop_event.is_set():
-            print(f'*****     CHECKING booling {booking.id}    *****')
+            print(f'*****     CHECKING booking {booking.id}    *****')
             time.sleep(5)
             check = self.raw_check_booking(partner_order_id=partner_order_id)
             status = check.get("status")
@@ -83,8 +85,10 @@ class ETGOstrovokManager:
                 return
 
             if status == "3ds":
-                self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
-                print('*****     MAKE PAYMENT    *****')
+                if not payment_request_is_completed:
+                    self.secure_check(url=check["data"]["data_3ds"]["action_url"], data=check["data"]["data_3ds"]["data"])
+                    print('*****     MAKE PAYMENT    *****')
+                    payment_request_is_completed = True
 
 
     def parse_guests_query(self, guests_str: str) -> List[RoomGuests]:
