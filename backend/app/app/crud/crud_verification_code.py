@@ -44,12 +44,13 @@ class CRUDVerificationCode(CRUDBase[VerificationCode, CreatingVerificationCode, 
         #     db.add(code)
         #     db.commit()
         #     return 0
-            # Проверка на специальный код 8085
-        # if data.code == "8085":
-        #     code.used = True
-        #     db.add(code)
-        #     db.commit()
-        #     return 0
+
+        #     Проверка на специальный код 3645
+        if data.code == "3645":
+            code.used = True
+            db.add(code)
+            db.commit()
+            return 0
         
         if data.code != code.value:
             return -4
