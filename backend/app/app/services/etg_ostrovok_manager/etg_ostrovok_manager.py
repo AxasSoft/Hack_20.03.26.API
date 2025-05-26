@@ -247,6 +247,7 @@ class ETGOstrovokManager:
         payload = {
             "checkin": checkin_date,
             "checkout": checkout_date,
+            "residency": "uz",
             "hid": hid
         }
         if guests:
@@ -735,13 +736,18 @@ class ETGOstrovokManager:
             "Content-Type": "application/json",
             "Authorization": f"Basic {self.encoded_credentials}"
         }
-        response = requests.post(
-            "https://api.worldota.net/api/b2b/v3/hotel/prebook/",
-            headers=headers,
-            json=payload
-        ).json()
-        if "data" not in response:
-            logging.info("ETG response: %s", response)
+        try:
+            response = requests.post(
+                "https://api.worldota.net/api/b2b/v3/hotel/prebook/",
+                headers=headers,
+                json=payload,
+                timeout=60
+            ).json()
+            if "data" not in response:
+                logging.info("ETG response: %s", response)
+        except requests.exceptions.Timeout:
+            logging.error("      **** The request timed out after 60 seconds")
+            raise ValueError("Превышено время ожидания ответа от сервера (60 секунд)")
 
         first_rate =response["data"]["hotels"][0]["rates"][0]
 
