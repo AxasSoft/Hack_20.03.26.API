@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 
 def get_excursion_booking(excursion_booking: ExcursionBooking) -> GettingExcursionBooking:
+    print("     *****     ", excursion_booking.excursion.category_id)
     return GettingExcursionBooking(
         id=excursion_booking.id,
         excursion_group_id=excursion_booking.group_id,
