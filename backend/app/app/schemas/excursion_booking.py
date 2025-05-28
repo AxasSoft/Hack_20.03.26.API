@@ -25,6 +25,7 @@ class GettingExcursionBooking(IdModel, BaseModel):
     updated_at: int
     comment: Optional[str]
     excursion_id: int
+    excursion_category_id: int
     excursion_name: str
     members: Optional[List[GettingExcursionMember]]
     excursion_images: List[Optional[str]] = []

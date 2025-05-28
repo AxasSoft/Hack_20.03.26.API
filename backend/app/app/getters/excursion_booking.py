@@ -18,6 +18,7 @@ def get_excursion_booking(excursion_booking: ExcursionBooking) -> GettingExcursi
         status=excursion_booking.status,
         comment=excursion_booking.comment,
         excursion_id=excursion_booking.excursion_id,
+        excursion_category_id=excursion_booking.excursion.category_id,
         excursion_name=excursion_booking.excursion.name,
         members=[
             GettingExcursionMember(
