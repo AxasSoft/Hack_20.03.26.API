@@ -88,3 +88,4 @@ from .audio_guide_file import *
 from .audio_guide_image import *
 
 from .hotel_booking import *
+from .not_included_tax import *

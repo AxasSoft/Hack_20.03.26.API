@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum, ForeignKey, DateTime, Float, Date
+from sqlalchemy import Boolean, Column, Integer, String, Enum, ForeignKey, DateTime, Float, Date, BigInteger
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.postgresql import ENUM
 
@@ -32,7 +32,9 @@ class HotelBooking(Base):
     init_uuid = Column(String, nullable=True)
     has_free_cancellation = Column(Boolean, nullable=False, server_default='false')
     free_cancellation_before = Column(DateTime, nullable=True)
+    rg_ext_hash = Column(BigInteger, nullable=False)
 
 
     user = relationship("User", back_populates="hotel_bookings")
+    not_included_taxes = relationship("NotIncludedTax", back_populates="hotel_booking")
 

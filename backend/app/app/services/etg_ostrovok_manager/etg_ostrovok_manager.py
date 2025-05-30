@@ -18,11 +18,12 @@ from app.utils.security import generate_random_password
 from app.exceptions import UnprocessableEntity, UnfoundEntity
 from app.schemas.hotel import (RoomGuests, GettingHotelSearchInfo, GettingHotelBookingInfo, HotelDescriptionChapter,
                                AvailableRoom, HotelComfortChapter, ClientBookingData, PreCreatedBooking,
-                               CreatedBooking, BookingUserData, CreatingBooking, GettingBooking, GettingDetailBooking)
+                               CreatedBooking, BookingUserData, CreatingBooking, GettingBooking, GettingDetailBooking,
+                               NotIncludedTax)
 from app.schemas.credit_card import CreditCardData, CreditCardWithCvc
 from app.utils.datetime import from_unix_timestamp, to_unix_timestamp
 from app.utils.pagination import get_page_no_db
-from app.models import HotelBooking
+from app.models import HotelBooking,NotIncludedTax as DBNotIncludedTax
 from app.enums.hotel_booking_status import HotelBookingStatus
 from app import crud
 
@@ -36,6 +37,19 @@ BASE_COMFORT = {
     "Животные": "animals",
     "Интернет": "internet",
     "Бассейн и пляж": "pool"
+}
+TAXES = {
+    "electricity_fee": "Плата за электричество",
+    "cleaning_fee": "Плата за уборку",
+    "transfer_fee": "Трансфер до отеля",
+    "environmental_fee": "Экологический сбор",
+    "vat": "НДС",
+    "city_tax": "Городской налог",
+    "resort_fee": "Курортный налог",
+    "service_fee": "Сервисный сбор",
+    "luxury_tax": "Налог на роскошь",
+    "hotel_fee": "Отельный сбор",
+    "occupancy_tax": "Налог на размещение"
 }
 HOTEL_COMFORT_LIST = ["Бассейн и пляж", "Интернет", "Животные", "Парковка", "Трансфер", "Общее", "Питание", "В номерах"]
 PICT_SIZE = '1024x768'
@@ -351,10 +365,22 @@ class ETGOstrovokManager:
                     datetime.strptime(free_cancellation_before, "%Y-%m-%dT%H:%M:%S"))
             has_free_cancellation = True if free_cancellation_before else False
             room_name = room["room_name"]
+            room_rg_ext = room["rg_ext"]
             images = []
             for hotel_room in hotel_dum_data["room_groups"]:
-                if hotel_room["name"] == room_name:
+                if hotel_room["rg_ext"] == room_rg_ext:
                     images = [img.replace('{size}', PICT_SIZE) for img in hotel_room["images"]]
+            not_included_taxes = []
+            for tax in room["payment_options"]["payment_types"][0]["tax_data"]["taxes"]:
+                if tax["included_by_supplier"]:
+                    continue
+                not_included_taxes.append(
+                    NotIncludedTax(
+                        amoun=int(float(tax["amount"]) * 100),
+                        currency=tax["currency_code"],
+                        name=TAXES[tax["name"]]
+                    )
+                )
             available_rooms.append(AvailableRoom(price=price,
                                                  room_name=room_name,
                                                  images=images,
@@ -363,7 +389,10 @@ class ETGOstrovokManager:
                                                  is_payment_now=is_payment_now,
                                                  is_need_credit_card_data=is_need_credit_card_data,
                                                  free_cancellation_before=free_cancellation_before,
-                                                 has_free_cancellation=has_free_cancellation))
+                                                 has_free_cancellation=has_free_cancellation,
+                                                 not_included_taxes=not_included_taxes if not_included_taxes else None
+                                                 )
+                                   )
         response_info.available_rooms = available_rooms
 
         return response_info
@@ -725,6 +754,7 @@ class ETGOstrovokManager:
 
     def prebooking(
             self,
+            db: Session,
             book_hash: str
     ):
         payload = {
@@ -757,9 +787,28 @@ class ETGOstrovokManager:
         if free_cancellation_before:
             free_cancellation_before = from_unix_timestamp(to_unix_timestamp(
                 datetime.strptime(free_cancellation_before, "%Y-%m-%dT%H:%M:%S")))
+
+        for tax in first_rate["payment_options"]["payment_types"][0]["tax_data"]["taxes"]:
+            if tax["included_by_supplier"]:
+                continue
+            not_included_tax = DBNotIncludedTax(
+                    amoun=int(float(tax["amount"]) * 100),
+                    currency=tax["currency_code"],
+                    name=TAXES[tax["name"]]
+                )
+            db.add(not_included_tax)
+            db.commit()
+
+        # Для дальнейшего определения соответствия забронированной комнаты со статическими данными отеля
+        sort_rg_ext_keys = sorted(first_rate["rg_ext"].keys())
+        rg_ext_hash = '1'
+        for k in sort_rg_ext_keys:
+            rg_ext_hash += first_rate["rg_ext"][k]
+
         pre_book_data = PreCreatedBooking(
             hotel_hid=response["data"]["hotels"][0]["hid"],
             room_name=first_rate["room_name"],
+            rg_ext_hash=int(rg_ext_hash),
             hotel_name=first_rate["legal_info"]["hotel"]["name"],
             free_cancellation_before=free_cancellation_before,
             has_free_cancellation=True if free_cancellation_before else False
@@ -1180,7 +1229,14 @@ class ETGOstrovokManager:
                             image_url.replace('{size}', PICT_SIZE) for image_url in hotel_data.get("images")
                         ]
                     for room in hotel_data.get("room_groups"):
-                        if room["name"] == booking.room_name:
+
+                        sort_rg_ext_keys = sorted(room["rg_ext"].keys())
+                        rg_ext_hash = '1'
+                        for k in sort_rg_ext_keys:
+                            rg_ext_hash += room["rg_ext"][k]
+                        rg_ext_hash = int(rg_ext_hash)
+
+                        if rg_ext_hash == booking.rg_ext_hash:
                             room_images = [
                                 image_url.replace('{size}', PICT_SIZE) for image_url in room.get("images")
                             ]
@@ -1199,7 +1255,15 @@ class ETGOstrovokManager:
             hotel_image=hotel_images,
             has_free_cancellation=booking.has_free_cancellation,
             free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before),
-            room_images=room_images
+            room_images=room_images,
+            not_included_taxes = [
+                DBNotIncludedTax(
+                    amoun=tax.amoun,
+                    currency=tax.currency,
+                    name=tax.name
+                )
+                for tax in booking.not_included_taxes
+            ] if booking.not_included_taxes else None
         )
         return booking_info
 

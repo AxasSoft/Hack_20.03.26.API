@@ -28,6 +28,12 @@ class ComfortEnum(str, Enum):
     ANIMALS = "animals"
 
 
+class NotIncludedTax(BaseModel):
+    name: str
+    currency: str
+    amount: int
+
+
 class HotelDescriptionChapter(BaseModel):
     title: str
     paragraphs: List[str]
@@ -52,6 +58,8 @@ class AvailableRoom(BaseModel):
     is_payment_now: bool
     has_free_cancellation: bool
     free_cancellation_before: Optional[int]
+    not_included_taxes: Optional[List[NotIncludedTax]]
+
 
 
 class GettingHotelSearchInfo(BaseModel):
@@ -106,6 +114,7 @@ class PreCreatedBooking(BaseModel):
     hotel_hid: str
     hotel_name: str
     room_id: Optional[int]
+    rg_ext_hash: int
     room_name: str
     has_free_cancellation: bool
     free_cancellation_before: Any  # Заменить на дату и вр
@@ -160,6 +169,7 @@ class GettingBooking(BaseModel):
 class GettingDetailBooking(GettingBooking):
     hotel_image: Optional[List[str]]
     room_images: Optional[List[str]]
+    not_included_taxes: Optional[List[NotIncludedTax]]
 
 
 
