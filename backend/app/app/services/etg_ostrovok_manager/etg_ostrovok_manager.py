@@ -368,6 +368,7 @@ class ETGOstrovokManager:
             room_rg_ext = room["rg_ext"]
             images = []
             for hotel_room in hotel_dum_data["room_groups"]:
+
                 if hotel_room["rg_ext"] == room_rg_ext:
                     images = [img.replace('{size}', PICT_SIZE) for img in hotel_room["images"]]
             not_included_taxes = []
@@ -376,7 +377,7 @@ class ETGOstrovokManager:
                     continue
                 not_included_taxes.append(
                     NotIncludedTax(
-                        amoun=int(float(tax["amount"]) * 100),
+                        amount=int(float(tax["amount"]) * 100),
                         currency=tax["currency_code"],
                         name=TAXES[tax["name"]]
                     )
