@@ -372,16 +372,17 @@ class ETGOstrovokManager:
                 if hotel_room["rg_ext"] == room_rg_ext:
                     images = [img.replace('{size}', PICT_SIZE) for img in hotel_room["images"]]
             not_included_taxes = []
-            for tax in room["payment_options"]["payment_types"][0]["tax_data"]["taxes"]:
-                if tax["included_by_supplier"]:
-                    continue
-                not_included_taxes.append(
-                    NotIncludedTax(
-                        amount=int(float(tax["amount"]) * 100),
-                        currency=tax["currency_code"],
-                        name=TAXES[tax["name"]]
+            if "taxes" in room["payment_options"]["payment_types"][0]["tax_data"]:
+                for tax in room["payment_options"]["payment_types"][0]["tax_data"]["taxes"]:
+                    if tax["included_by_supplier"]:
+                        continue
+                    not_included_taxes.append(
+                        NotIncludedTax(
+                            amount=int(float(tax["amount"]) * 100),
+                            currency=tax["currency_code"],
+                            name=TAXES[tax["name"]]
+                        )
                     )
-                )
             available_rooms.append(AvailableRoom(price=price,
                                                  room_name=room_name,
                                                  images=images,
