@@ -756,7 +756,6 @@ class ETGOstrovokManager:
 
     def prebooking(
             self,
-            db: Session,
             book_hash: str
     ):
         payload = {
@@ -794,18 +793,16 @@ class ETGOstrovokManager:
             if tax["included_by_supplier"]:
                 continue
             not_included_tax = DBNotIncludedTax(
-                    amoun=int(float(tax["amount"]) * 100),
+                    amount=int(float(tax["amount"]) * 100),
                     currency=tax["currency_code"],
                     name=TAXES[tax["name"]]
                 )
-            db.add(not_included_tax)
-            db.commit()
 
         # Для дальнейшего определения соответствия забронированной комнаты со статическими данными отеля
         sort_rg_ext_keys = sorted(first_rate["rg_ext"].keys())
         rg_ext_hash = '1'
         for k in sort_rg_ext_keys:
-            rg_ext_hash += first_rate["rg_ext"][k]
+            rg_ext_hash += str(first_rate["rg_ext"][k])
 
         pre_book_data = PreCreatedBooking(
             hotel_hid=response["data"]["hotels"][0]["hid"],
@@ -815,7 +812,7 @@ class ETGOstrovokManager:
             free_cancellation_before=free_cancellation_before,
             has_free_cancellation=True if free_cancellation_before else False
         )
-        return new_book_hash, match_hash, pre_book_data
+        return new_book_hash, match_hash, pre_book_data, not_included_tax
 
 
     def create_booking(
@@ -827,7 +824,7 @@ class ETGOstrovokManager:
             checkout: int,
             user_id: int
     ):
-        new_book_hash, verify_hash, pre_book_data = self.prebooking(book_hash=book_hash)
+        new_book_hash, verify_hash, pre_book_data, not_included_tax = self.prebooking(book_hash=book_hash)
         if match_hash != verify_hash:
             raise UnprocessableEntity(message="Что-то пошло не так, обновите страницу")
         payload = {
@@ -874,6 +871,9 @@ class ETGOstrovokManager:
             is_need_cvc=pay_data["is_need_cvc"]
         )
         new_hotel_booking = crud.hotel_booking.create(db=db, obj_in=creating_data, **pre_book_data.dict())
+        not_included_tax.hotel_booking_id = new_hotel_booking.id
+        db.add(not_included_tax)
+        db.commit()
 
 
         return CreatingBooking(
@@ -1235,7 +1235,7 @@ class ETGOstrovokManager:
                         sort_rg_ext_keys = sorted(room["rg_ext"].keys())
                         rg_ext_hash = '1'
                         for k in sort_rg_ext_keys:
-                            rg_ext_hash += room["rg_ext"][k]
+                            rg_ext_hash += str(room["rg_ext"][k])
                         rg_ext_hash = int(rg_ext_hash)
 
                         if rg_ext_hash == booking.rg_ext_hash:
@@ -1259,8 +1259,8 @@ class ETGOstrovokManager:
             free_cancellation_before=to_unix_timestamp(booking.free_cancellation_before),
             room_images=room_images,
             not_included_taxes = [
-                DBNotIncludedTax(
-                    amoun=tax.amoun,
+                NotIncludedTax(
+                    amount=tax.amount,
                     currency=tax.currency,
                     name=tax.name
                 )

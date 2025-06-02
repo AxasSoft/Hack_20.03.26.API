@@ -32,7 +32,7 @@ class HotelBooking(Base):
     init_uuid = Column(String, nullable=True)
     has_free_cancellation = Column(Boolean, nullable=False, server_default='false')
     free_cancellation_before = Column(DateTime, nullable=True)
-    rg_ext_hash = Column(BigInteger, nullable=False)
+    rg_ext_hash = Column(BigInteger, nullable=True)
 
 
     user = relationship("User", back_populates="hotel_bookings")
