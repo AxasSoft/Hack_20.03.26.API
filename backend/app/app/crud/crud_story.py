@@ -485,6 +485,7 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
             user: Optional[User],
             is_hugged: Optional[bool] = None,
             is_favorite: Optional[bool] = None,
+            is_short_story: bool = False,
             page: Optional[int] = None,
             current_user: Optional[User] = None,
             host: Optional[str],
@@ -496,6 +497,14 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
 
         query = db.query(Story)
         now = datetime.datetime.utcnow()
+
+        if is_short_story:
+            query = query.filter(
+                Story.is_short_story == True,
+                Story.created >= now - datetime.timedelta(hours=24)
+            )
+        else:
+            query = query.filter(Story.is_short_story == False)
 
         if search is not None:
             query = query \

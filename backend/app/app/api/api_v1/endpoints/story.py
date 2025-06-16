@@ -1040,6 +1040,7 @@ def get_stories_by_criteria(
         search: Optional[str] = Query(None, title="Текст истории, название хештега или темы"),
         is_hugged: Optional[bool] = Query(None),
         is_favorite: Optional[bool] = Query(None),
+        is_short_story: bool = Query(False),
         page: Optional[int] = Query(1, title="Номер страницы"),
         current_user: Optional[models.User] = Depends(deps.get_optional_current_user),
         x_real_ip: Optional[str] = Header(None),
@@ -1077,7 +1078,8 @@ def get_stories_by_criteria(
                 user_agent=user_agent,
                 x_firebase_token=x_firebase_token,
                 is_hugged=is_hugged,
-                is_favorite=is_favorite
+                is_favorite=is_favorite,
+                is_short_story=is_short_story
             )
         else:
             data, paginator = crud.story.get_stories(
@@ -1104,11 +1106,16 @@ def get_stories_by_criteria(
         )
     
 
-
-    key_tuple = ('stories_by_user', f"user_criteria - {current_user.id} - page - \
-                 {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - user_id - {user_id} - \
-                 hashtag_id - {hashtag_id} - search - {search}")
-    data, from_cache = cache.behind_cache(key_tuple, fatch_stories_criteria, ttl=7200)
+    if is_short_story:
+        key_tuple = ('short_stories_by_user', f"user_criteria - {current_user.id} - page - \
+                     {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - user_id - {user_id} - \
+                     hashtag_id - {hashtag_id} - search - {search}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_criteria, ttl=7200)
+    else:
+        key_tuple = ('stories_by_user', f"user_criteria - {current_user.id} - page - \
+                     {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - user_id - {user_id} - \
+                     hashtag_id - {hashtag_id} - search - {search}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_criteria, ttl=7200)
     
     if from_cache:
         logging.info("From the cache")
