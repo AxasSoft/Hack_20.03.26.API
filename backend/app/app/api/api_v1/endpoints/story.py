@@ -50,6 +50,7 @@ def get_stories_by_user(
         current_user: models.User = Depends(deps.get_current_active_user),
         is_hugged: Optional[bool] = Query(None),
         is_favorite: Optional[bool] = Query(None),
+        is_short_story: bool = Query(False),
         cache: Cache = Depends(deps.get_cache_list),
 ):
 
@@ -60,15 +61,22 @@ def get_stories_by_user(
             page=page,
             current_user=current_user,
             is_hugged=is_hugged,
-            is_favorite=is_favorite)
+            is_favorite=is_favorite,
+            is_short_story=is_short_story)
         
         return schemas.ListOfEntityResponse(
             data=[getters.story.get_story(db, datum, current_user) for datum in data],
             meta=Meta(paginator=paginator)
             )
-    
-    key_tuple = ('stories_by_user', f"user_me - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
-    data, from_cache = cache.behind_cache(key_tuple, fatch_stories, ttl=7200)
+
+    if is_short_story:
+        key_tuple = ('short_stories_by_user',
+                     f"user_me - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories, ttl=7200)
+    else:
+        key_tuple = ('stories_by_user',
+                     f"user_me - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories, ttl=7200)
     
     if from_cache:
         logging.info("From the cache")
@@ -82,7 +90,7 @@ def get_stories_by_user(
 @router.get(
     '/stories/subscriptions/',
     response_model=schemas.ListOfEntityResponse[schemas.GettingStory],
-    name="Получить все истории текущего пользователя",
+    name="Получить все истории подписок",
     responses={
         400: {
             'model': schemas.OkResponse,
@@ -110,6 +118,7 @@ def get_stories_from_subscriptions(
         search: Optional[str] = Query(None, title="Текст истории, название хештега или темы"),
         is_hugged: Optional[bool] = Query(None),
         is_favorite: Optional[bool] = Query(None),
+        is_short_story: bool = Query(False),
         cache: Cache = Depends(deps.get_cache_list),
 ):
     def fatch_stories_subscriptions():
@@ -119,7 +128,8 @@ def get_stories_from_subscriptions(
             current_user=current_user,
             search=search,
             is_hugged=is_hugged,
-            is_favorite=is_favorite
+            is_favorite=is_favorite,
+            is_short_story=is_short_story
         )
 
         return schemas.ListOfEntityResponse(
@@ -131,8 +141,14 @@ def get_stories_from_subscriptions(
             meta=Meta(paginator=paginator)
         )
 
-    key_tuple = ('stories_by_user', f"user_subscriptions - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - search - {search}")
-    data, from_cache = cache.behind_cache(key_tuple, fatch_stories_subscriptions, ttl=7200)
+    if is_short_story:
+        key_tuple = ('short_stories_by_user',
+                     f"user_subscriptions - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - search - {search}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_subscriptions, ttl=7200)
+    else:
+        key_tuple = ('stories_by_user',
+                     f"user_subscriptions - {current_user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - search - {search}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_subscriptions, ttl=7200)
     
     if from_cache:
         logging.info("From the cache")
@@ -172,6 +188,7 @@ def get_stories_by_user(
         page: Optional[int] = Query(1, title="Номер страницы"),
         is_hugged: Optional[bool] = Query(None),
         is_favorite: Optional[bool] = Query(None),
+        is_short_story: bool = Query(False),
         current_user: Optional[models.User] = Depends(deps.get_optional_current_user),
         cache: Cache = Depends(deps.get_cache_list),
 ):
@@ -187,7 +204,8 @@ def get_stories_by_user(
             page=page,
             current_user=current_user,
             is_hugged=is_hugged,
-            is_favorite=is_favorite
+            is_favorite=is_favorite,
+            is_short_story=is_short_story
         )
 
         return schemas.ListOfEntityResponse(
@@ -199,8 +217,14 @@ def get_stories_by_user(
             meta=Meta(paginator=paginator)
         )
 
-    key_tuple = ('stories_by_user', f"get_user_id - {user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
-    data, from_cache = cache.behind_cache(key_tuple, fatch_stories_user, ttl=7200)
+    if is_short_story:
+        key_tuple = ('short_stories_by_user',
+                     f"get_user_id - {user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_user, ttl=7200)
+    else:
+        key_tuple = ('stories_by_user',
+                     f"get_user_id - {user.id} - page - {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_user, ttl=7200)
     
     if from_cache:
         logging.info("From the cache")
@@ -237,13 +261,14 @@ def get_stories_by_users(
         user_id: int = Field(...,title="Идентификатор пользователя"),
         db: Session = Depends(deps.get_db),
         page: Optional[int] = Query(1, title="Номер страницы"),
+        is_short_story: bool = Query(False),
         current_user: Optional[models.User] = Depends(deps.get_current_active_superuser),
 ):
     user = crud.user.get_by_id(db, user_id)
 
     if user is None:
         raise UnfoundEntity(num=2, message="Пользователь не найден")
-    data, paginator = crud.story.get_stories_by_user(db, user=user, page=page) 
+    data, paginator = crud.story.get_stories_by_user(db, user=user, page=page, is_short_story=is_short_story)
     return schemas.ListOfEntityResponse(
         data=[
             getters.story.get_story(db, datum,current_user)
@@ -284,10 +309,14 @@ def add_new_story(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
         cache: Cache = Depends(deps.get_cache_list),
+        is_short_story: bool = Query(False)
 ):
-    cache.delete_by_prefix('stories_by_user')
+    if is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
 
-    data, code, indexes = crud.story.create_story_by_user(db, user=current_user, obj_in=data)
+    data, code, indexes = crud.story.create_story_by_user(db, user=current_user, obj_in=data, is_short_story=is_short_story)
 
     if code == -2:
         raise ListOfEntityError(
@@ -379,14 +408,18 @@ def add_new_story(
         current_user: models.User = Depends(deps.get_current_active_superuser),
         user_id: int = Path(...,title="Идентификатор пользователя"),
         cache: Cache = Depends(deps.get_cache_list),
+        is_short_story: bool = Query(False)
 ):
-    cache.delete_by_prefix('stories_by_user')
+    if is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
 
     user = crud.user.get_by_id(db, user_id)
     if user is None:
         raise UnfoundEntity(num=2, message="Пользователь не найден")
 
-    data, code, indexes = crud.story.create_story_by_user(db, user=user, obj_in=data)
+    data, code, indexes = crud.story.create_story_by_user(db, user=user, obj_in=data, is_short_story=is_short_story)
 
 
     if code == -2:

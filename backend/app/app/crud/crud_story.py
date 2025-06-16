@@ -72,11 +72,12 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
 
         db.commit()
 
-    def create_story_by_user(self, db, *, user: User, obj_in: CreatingStory):
+    def create_story_by_user(self, db, *, user: User, obj_in: CreatingStory, is_short_story: bool = False):
         db_obj = Story()
         db_obj.user = user
         db_obj.text = obj_in.text
         db_obj.is_private = obj_in.is_private if obj_in.is_private is not None else None
+        db_obj.is_short_story = is_short_story
         db.add(db_obj)
 
         user.rating += 1
@@ -238,8 +239,19 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
         page: Optional[int] = None,
         is_hugged: Optional[bool] = None,
         is_favorite: Optional[bool] = None,
+        is_short_story: bool = False
     ) -> Tuple[List[Story], Paginator]:
+        now = datetime.datetime.utcnow()
         query = db.query(Story).filter(Story.user == user).order_by(desc(Story.created))
+
+        if is_short_story:
+            query = query.filter(
+                Story.is_short_story == True,
+                Story.created >= now - datetime.timedelta(hours=24)
+            )
+        else:
+            query = query.filter(Story.is_short_story == False)
+
         if current_user is not None:
             query = (
                 query
@@ -286,6 +298,7 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
             is_hugged: Optional[bool] = None,
             is_favorite: Optional[bool] = None,
             page: Optional[int] = None,
+            is_short_story: bool = False,
             current_user: User = None,
             host: Optional[str] = None,
             x_real_ip: Optional[str] = None,
@@ -315,6 +328,15 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
         ]
 
         query = query.filter(Story.user_id.in_(following_user_ids))
+
+        if is_short_story:
+            query = query.filter(
+                Story.is_short_story == True,
+                Story.created >= now - datetime.timedelta(hours=24)
+            )
+        else:
+            query = query.filter(Story.is_short_story == False)
+
         if hashtag is not None:
             query = query.join(StoryHashtag).filter(StoryHashtag.hashtag == hashtag)
 
