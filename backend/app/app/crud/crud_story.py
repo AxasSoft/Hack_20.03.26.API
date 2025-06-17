@@ -2,7 +2,9 @@ import datetime
 from typing import Any, Dict, Optional, Union, Type, List, Tuple
 
 from sqlalchemy import or_, not_, and_, desc
+from paginate_sqlalchemy import SqlalchemyOrmPage
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from user_agents import parse
 
 from app.crud.base import CRUDBase
@@ -571,5 +573,211 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
 
 
         return pagination.get_page(query, page)
+
+    def get_short_stories_from_subscriptions(
+            self,
+            db,
+            *,
+            page: Optional[int] = None,
+            current_user: User = None,
+            host: Optional[str] = None,
+            x_real_ip: Optional[str] = None,
+            accept_language: Optional[str] = None,
+            user_agent: Optional[str] = None,
+            x_firebase_token: Optional[str] = None,
+    ):
+
+        following_user_ids = [
+            row[0]
+            for row
+            in db.query(Subscription.object_id).filter(Subscription.subject_id == current_user.id).all()
+        ]
+
+        user_ids_with_stories = (
+            db.query(Story.user_id)
+            .filter(
+                Story.is_short_story == True,
+                Story.created >= datetime.datetime.utcnow() - datetime.timedelta(hours=24),
+                Story.user_id.in_(following_user_ids)
+            )
+            .group_by(Story.user_id)
+            .order_by(func.max(Story.created).desc())  # Сортируем по дате последней истории
+            .all()
+
+        )
+        user_ids = [user_id for (user_id,) in user_ids_with_stories]
+
+        if not user_ids:
+            return [], None
+
+        query = db.query(Story)
+        now = datetime.datetime.utcnow()
+        query = query.filter(
+            Story.is_short_story == True,
+            Story.created >= now - datetime.timedelta(hours=24),
+            Story.user_id.in_(following_user_ids)
+        )
+        if current_user is not None:
+            self._handle_device(
+                db=db,
+                owner=current_user,
+                host=host,
+                x_real_ip=x_real_ip,
+                accept_language=accept_language,
+                user_agent=user_agent,
+                x_firebase_token=x_firebase_token
+            )
+            query = (
+                query
+                .join(
+                    StoryHiding,
+                    and_(StoryHiding.story_id == Story.id, StoryHiding.user_id == current_user.id),
+                    isouter=True
+                )
+                .join(
+                    UserBlock,
+                    or_(
+                        and_(UserBlock.object_id == current_user.id, UserBlock.subject_id == Story.user_id),
+                        and_(UserBlock.subject_id == current_user.id, UserBlock.object_id == Story.user_id)
+                    ),
+                    isouter=True
+                )
+                .filter(StoryHiding.id == None, UserBlock.id == None)
+            )
+        all_stories = query.order_by(Story.user_id, desc(Story.created)).all()
+
+        stories_by_user: Dict[int, List[Story]] = {}
+        for story in all_stories:
+            if story.user_id not in stories_by_user:
+                stories_by_user[story.user_id] = []
+            stories_by_user[story.user_id].append(story)
+
+        grouped_stories = [
+            stories_by_user[user_id]
+            for user_id in user_ids
+            if user_id in stories_by_user
+        ]
+
+        if page is not None:
+            items_per_page = 30
+            total_items = len(grouped_stories)
+            total_pages = (total_items + items_per_page - 1) // items_per_page  # Округление вверх
+
+            # Проверка на выход за границы
+            if page < 1 or (page > total_pages and total_pages > 0):
+                return [], None
+
+            start_idx = (page - 1) * items_per_page
+            end_idx = start_idx + items_per_page
+            paginated_items = grouped_stories[start_idx:end_idx]
+
+            paginator = Paginator(
+                page=page,
+                total=total_pages,
+                has_prev=page > 1,
+                has_next=page < total_pages
+            )
+            return paginated_items, paginator
+        else:
+            return grouped_stories, None
+
+    def get_short_stories(
+            self,
+            db,
+            *,
+            page: Optional[int] = None,
+            current_user: Optional[User] = None,
+            host: Optional[str],
+            x_real_ip: Optional[str],
+            accept_language: Optional[str],
+            user_agent: Optional[str],
+            x_firebase_token: Optional[str]
+    ) -> Tuple[List[Story], Paginator]:
+
+        user_ids_with_stories = (
+                                    db.query(Story.user_id)
+                                    .filter(
+                                        Story.is_short_story == True,
+                                        Story.created >= datetime.datetime.utcnow() - datetime.timedelta(hours=24))
+                                    .group_by(Story.user_id)
+                                    .order_by(func.max(Story.created).desc())  # Сортируем по дате последней истории
+                                    .all()
+
+        )
+        user_ids =[user_id for (user_id,) in user_ids_with_stories]
+
+        if not user_ids:
+            return [], None
+
+        query = db.query(Story)
+        now = datetime.datetime.utcnow()
+        query = query.filter(
+            Story.is_short_story == True,
+            Story.created >= now - datetime.timedelta(hours=24)
+        )
+        if current_user is not None:
+            self._handle_device(
+                db=db,
+                owner=current_user,
+                host=host,
+                x_real_ip=x_real_ip,
+                accept_language=accept_language,
+                user_agent=user_agent,
+                x_firebase_token=x_firebase_token
+            )
+            query = (
+                query
+                .join(
+                    StoryHiding,
+                    and_(StoryHiding.story_id == Story.id, StoryHiding.user_id == current_user.id),
+                    isouter=True
+                )
+                .join(
+                    UserBlock,
+                    or_(
+                        and_(UserBlock.object_id == current_user.id, UserBlock.subject_id == Story.user_id),
+                        and_(UserBlock.subject_id == current_user.id, UserBlock.object_id == Story.user_id)
+                    ),
+                    isouter=True
+                )
+                .filter(StoryHiding.id == None, UserBlock.id == None)
+            )
+        all_stories = query.order_by(Story.user_id, desc(Story.created)).all()
+
+        stories_by_user: Dict[int, List[Story]] = {}
+        for story in all_stories:
+            if story.user_id not in stories_by_user:
+                stories_by_user[story.user_id] = []
+            stories_by_user[story.user_id].append(story)
+
+        grouped_stories = [
+            stories_by_user[user_id]
+            for user_id in user_ids
+            if user_id in stories_by_user
+        ]
+
+        if page is not None:
+            items_per_page = 30
+            total_items = len(grouped_stories)
+            total_pages = (total_items + items_per_page - 1) // items_per_page  # Округление вверх
+
+            # Проверка на выход за границы
+            if page < 1 or (page > total_pages and total_pages > 0):
+                return [], None
+
+            start_idx = (page - 1) * items_per_page
+            end_idx = start_idx + items_per_page
+            paginated_items = grouped_stories[start_idx:end_idx]
+
+            paginator = Paginator(
+                page=page,
+                total=total_pages,
+                has_prev=page > 1,
+                has_next=page < total_pages
+            )
+            return paginated_items, paginator
+        else:
+            return grouped_stories, None
+
 
 story = CRUDStory(Story)

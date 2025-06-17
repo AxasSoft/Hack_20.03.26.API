@@ -24,9 +24,8 @@ class UpdatingStory(BaseModel):
     hashtags: Optional[List[str]]
 
 
-class GettingStory(IdModel, BaseModel):
+class BaseGettingStory(IdModel, BaseModel):
     created: int
-    user: GettingUserShortInfo
     text: Optional[str]
     video: Optional[GettingStoryAttachment]
     gallery: List[GettingStoryAttachment]
@@ -39,6 +38,15 @@ class GettingStory(IdModel, BaseModel):
     is_favorite: Optional[bool] = None
     comments_count: int = 0
     is_comment: Optional[bool] = False
+
+class GettingStory(BaseGettingStory):
+    user: GettingUserShortInfo
+
+
+class GettingUserStories(BaseModel):
+    user: GettingUserShortInfo
+    stories: List[BaseGettingStory]
+
 
 
 class HugBody(BaseModel):

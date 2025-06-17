@@ -1,6 +1,6 @@
 import logging
 import datetime
-from typing import Optional
+from typing import Optional, List
 
 from app.models import User
 from sqlalchemy import not_
@@ -11,7 +11,7 @@ from .timestamp import to_timestamp
 from ..models import Story, StoryAttachment
 from ..models.view import View
 from ..models.hug import Hug
-from ..schemas import GettingStory
+from ..schemas import GettingStory, GettingUserStories, BaseGettingStory
 
 
 def get_story(db: Session, db_obj: Story, db_user: Optional[User] = None) -> GettingStory:
@@ -43,3 +43,21 @@ def get_story(db: Session, db_obj: Story, db_user: Optional[User] = None) -> Get
 
 
     return result
+
+
+def get_grouped_short_story(db: Session, stories: List[Story], db_user: User):
+    stories_list = [
+        BaseGettingStory(
+            **get_story(db=db, db_obj=story).dict()
+        )
+        for story in stories
+    ]
+    return GettingUserStories(
+        user=get_user_short_info(stories[0].user),
+        stories=stories_list
+    )
+
+
+
+
+

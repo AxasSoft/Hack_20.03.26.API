@@ -524,6 +524,10 @@ def edit_story(
             message="История не принадлежит порльзователю",
             description="История не принадлежит порльзователю"
         )
+    if not story.is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
 
     data, code, indexes = crud.story.update(db, db_obj=story, obj_in=data)
 
@@ -673,11 +677,15 @@ def edit_story(
         current_user: models.User = Depends(deps.get_current_active_superuser),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    cache.delete_by_prefix('stories_by_user')
+
 
     story = crud.story.get_by_id(db, id=story_id)
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
+    if not story.is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
 
     data, code, indexes = crud.story.update(db, db_obj=story, obj_in=data)
 
@@ -820,11 +828,15 @@ def mark_hugged(
         cache: Cache = Depends(deps.get_cache_list),
 ):
 
-    cache.delete_by_prefix('stories_by_user')
 
     story = crud.story.get_by_id(db, id=story_id)
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
+
+    if not story.is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
     key_tuple_user = ('user_me', f"user_me - {story.user_id}")
     cache.delete(key_tuple_user)
 
@@ -955,7 +967,6 @@ def delete_profile_story(
         current_user: models.User = Depends(deps.get_current_active_user),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    cache.delete_by_prefix('stories_by_user')
     key_tuple_user = ('user_me', f"user_me - {current_user.id}")
     cache.delete(key_tuple_user)
     story = crud.story.get_by_id(db, id=story_id)
@@ -966,6 +977,10 @@ def delete_profile_story(
             message="История не принадлежит порльзователю",
             description="История не принадлежит порльзователю"
         )
+    if not story.is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
     crud.story.remove(db, id=story_id)
     return schemas.OkResponse()
 
@@ -1000,10 +1015,13 @@ def delete_user_story(
         current_user: models.User = Depends(deps.get_current_active_superuser),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    cache.delete_by_prefix('stories_by_user')
     story = crud.story.get_by_id(db, id=story_id)
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
+    if not story.is_short_story:
+        cache.delete_by_prefix('short_stories_by_user')
+    else:
+        cache.delete_by_prefix('stories_by_user')
     crud.story.remove(db,id=story_id)
     return schemas.OkResponse()
 
