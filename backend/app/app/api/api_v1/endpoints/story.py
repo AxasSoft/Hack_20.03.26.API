@@ -524,7 +524,7 @@ def edit_story(
             message="История не принадлежит порльзователю",
             description="История не принадлежит порльзователю"
         )
-    if not story.is_short_story:
+    if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
@@ -682,7 +682,7 @@ def edit_story(
     story = crud.story.get_by_id(db, id=story_id)
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
-    if not story.is_short_story:
+    if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
@@ -833,7 +833,7 @@ def mark_hugged(
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
 
-    if not story.is_short_story:
+    if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
@@ -977,7 +977,7 @@ def delete_profile_story(
             message="История не принадлежит порльзователю",
             description="История не принадлежит порльзователю"
         )
-    if not story.is_short_story:
+    if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
@@ -1018,7 +1018,7 @@ def delete_user_story(
     story = crud.story.get_by_id(db, id=story_id)
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
-    if not story.is_short_story:
+    if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
