@@ -837,14 +837,14 @@ def mark_hugged(
     if story is None:
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
 
+    crud.story.hug_story(db, story=story, user=current_user, hugs=hugbody.hugs)
+
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
     key_tuple_user = ('user_me', f"user_me - {story.user_id}")
     cache.delete(key_tuple_user)
-
-    crud.story.hug_story(db, story=story, user=current_user, hugs=hugbody.hugs)
 
     db.refresh(story)
 
