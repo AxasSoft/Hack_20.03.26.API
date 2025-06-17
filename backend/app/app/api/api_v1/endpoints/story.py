@@ -624,8 +624,8 @@ def get_story(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
         cache: Cache = Depends(deps.get_cache_sing),
+        is_short_story: bool = Query(False)
 ):
-
     def fatch_stories_single():
         story = crud.story.get_by_id(db, id=story_id)
         if story is None:
@@ -635,8 +635,12 @@ def get_story(
             data=getters.story.get_story(db, story, current_user)
         )
 
-    key_tuple = ('stories_by_user', f"story_id - {story_id}")
-    data, from_cache = cache.behind_cache(key_tuple, fatch_stories_single, ttl=7200)
+    if is_short_story:
+        key_tuple = ('short_stories_by_user', f"story_id - {story_id}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_single, ttl=7200)
+    else:
+        key_tuple = ('stories_by_user', f"story_id - {story_id}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_single, ttl=7200)
     
     if from_cache:
         logging.info("From the cache")

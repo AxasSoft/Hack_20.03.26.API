@@ -22,7 +22,7 @@ router = APIRouter()
 
 @router.get(
     '/short-stories/subscriptions/',
-    response_model=schemas.ListOfEntityResponse[schemas.GettingStory],
+    response_model=schemas.ListOfEntityResponse[schemas.GettingUserStories],
     name="Получить short-истории подписок",
     responses={
         400: {
@@ -59,7 +59,7 @@ def get_short_stories_from_subscriptions(
 
         return schemas.ListOfEntityResponse(
             data=[
-                getters.story.get_story(db, datum, current_user)
+                getters.story.get_grouped_short_story(db, datum, current_user)
                 for datum
                 in data
             ],
