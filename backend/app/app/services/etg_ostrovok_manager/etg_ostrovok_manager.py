@@ -229,7 +229,7 @@ class ETGOstrovokManager:
                         obj = hotels_getting_data[hotel_data.get("hid")]
                         obj.address = hotel_data.get("address")
                         obj.name = hotel_data.get("name")
-                        image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE)
+                        image_url = hotel_data.get("images")[0].replace('{size}', PICT_SIZE) if hotel_data.get("images") else None
                         obj.image = image_url
 
                         hotel_comfort = []
@@ -826,7 +826,7 @@ class ETGOstrovokManager:
     ):
         new_book_hash, verify_hash, pre_book_data, not_included_tax = self.prebooking(book_hash=book_hash)
         if match_hash != verify_hash:
-            raise UnprocessableEntity(message="Что-то пошло не так, обновите страницу")
+            raise UnprocessableEntity(message="По данному тарифу произошли изменения, обновите страницу")
         payload = {
             "partner_order_id": str(uuid.uuid4()),
             "book_hash": new_book_hash,
