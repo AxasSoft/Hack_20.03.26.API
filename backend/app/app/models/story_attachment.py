@@ -17,6 +17,7 @@ class StoryAttachment(Base):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False, index=True)
     story_id = Column(Integer, ForeignKey(Story.id), nullable=True, index=True)
     num = Column(Integer, nullable=True)
+    is_clip = Column(Boolean, nullable=False, default=False, server_default="false", index=True)
 
     user = relationship(User, back_populates='stories_attachments')
     story = relationship(Story, back_populates='attachments')

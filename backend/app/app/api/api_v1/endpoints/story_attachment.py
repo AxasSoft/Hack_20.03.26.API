@@ -36,6 +36,7 @@ router = APIRouter()
 def upload(
         attachment: UploadFile = File(None),
         num: Optional[int] = Form(None),
+        is_clip: bool = Form(False),
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_user),
         s3_client: BaseClient = Depends(deps.get_s3_client),
@@ -49,7 +50,8 @@ def upload(
         db,
         current_user=current_user,
         attachment=attachment,
-        num=num
+        num=num,
+        is_clip=is_clip
     )
 
     if attachment is None:
@@ -87,10 +89,12 @@ def upload(
 def upload(
         attachment: UploadFile = File(None),
         db: Session = Depends(deps.get_db),
+        is_clip: bool = Form(False),
         current_user: models.User = Depends(deps.get_current_user),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
         user_id: int = Path(..., gt=0)
+
 ):
 
     user = crud.user.get_by_id(db, user_id)
@@ -102,7 +106,8 @@ def upload(
     attachment = crud.story_attachment.upload(
         db,
         current_user=user,
-        attachment=attachment
+        attachment=attachment,
+        is_clip=is_clip
     )
 
     if attachment is None:

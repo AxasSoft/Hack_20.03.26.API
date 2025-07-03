@@ -21,6 +21,8 @@ def get_story(db: Session, db_obj: Story, db_user: Optional[User] = None) -> Get
     images = [att for att in sorted(db_obj.attachments, key=lambda x: x.id) if att.is_image]
     is_comment = any(comment.user == db_user for comment in db_obj.comments) if db_user is not None else None
 
+    logging.info(f"*  *   *     * ***** HUGGED отладка{[hug for hug in db_obj.hugs if hug.user == db_user]}")
+
     result = GettingStory(
         id=db_obj.id,
         created=to_timestamp(db_obj.created),

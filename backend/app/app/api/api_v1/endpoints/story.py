@@ -309,10 +309,13 @@ def add_new_story(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
         cache: Cache = Depends(deps.get_cache_list),
-        is_short_story: bool = Query(False)
+        is_short_story: bool = Query(False),
+        is_clip: bool = Query(False)
 ):
     if is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
 
@@ -408,7 +411,8 @@ def add_new_story(
         current_user: models.User = Depends(deps.get_current_active_superuser),
         user_id: int = Path(...,title="Идентификатор пользователя"),
         cache: Cache = Depends(deps.get_cache_list),
-        is_short_story: bool = Query(False)
+        is_short_story: bool = Query(False),
+        is_clip: bool = Query(False)
 ):
     if is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
@@ -419,7 +423,7 @@ def add_new_story(
     if user is None:
         raise UnfoundEntity(num=2, message="Пользователь не найден")
 
-    data, code, indexes = crud.story.create_story_by_user(db, user=user, obj_in=data, is_short_story=is_short_story)
+    data, code, indexes = crud.story.create_story_by_user(db, user=user, obj_in=data, is_short_story=is_short_story, is_clip=is_clip)
 
 
     if code == -2:
@@ -526,6 +530,8 @@ def edit_story(
         )
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif story.is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
 
@@ -624,19 +630,22 @@ def get_story(
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
         cache: Cache = Depends(deps.get_cache_sing),
-        is_short_story: bool = Query(False)
+        is_short_story: bool = Query(False),
+        is_clip: bool = Query(False)
 ):
     def fatch_stories_single():
         story = crud.story.get_by_id(db, id=story_id)
         if story is None:
             raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
-
         return schemas.SingleEntityResponse(
             data=getters.story.get_story(db, story, current_user)
         )
 
     if is_short_story:
         key_tuple = ('short_stories_by_user', f"story_id - {story_id}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_single, ttl=7200)
+    elif is_clip:
+        key_tuple = ('clips_by_user', f"clop_id - {story_id}")
         data, from_cache = cache.behind_cache(key_tuple, fatch_stories_single, ttl=7200)
     else:
         key_tuple = ('stories_by_user', f"story_id - {story_id}")
@@ -688,6 +697,8 @@ def edit_story(
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif story.is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
 
@@ -841,6 +852,8 @@ def mark_hugged(
 
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif story.is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
     key_tuple_user = ('user_me', f"user_me - {story.user_id}")
@@ -983,6 +996,8 @@ def delete_profile_story(
         )
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif story.is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
     crud.story.remove(db, id=story_id)
@@ -1024,6 +1039,8 @@ def delete_user_story(
         raise UnfoundEntity(message="История не найдена", description="Исторрия не найдена",num=1)
     if story.is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif story.is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
     crud.story.remove(db,id=story_id)
@@ -1063,6 +1080,7 @@ def get_stories_by_criteria(
         is_hugged: Optional[bool] = Query(None),
         is_favorite: Optional[bool] = Query(None),
         is_short_story: bool = Query(False),
+        is_clip: bool = Query(False),
         page: Optional[int] = Query(1, title="Номер страницы"),
         current_user: Optional[models.User] = Depends(deps.get_optional_current_user),
         x_real_ip: Optional[str] = Header(None),
@@ -1101,7 +1119,8 @@ def get_stories_by_criteria(
                 x_firebase_token=x_firebase_token,
                 is_hugged=is_hugged,
                 is_favorite=is_favorite,
-                is_short_story=is_short_story
+                is_short_story=is_short_story,
+                is_clip=is_clip
             )
         else:
             data, paginator = crud.story.get_stories(
@@ -1115,7 +1134,9 @@ def get_stories_by_criteria(
                 x_real_ip=None,
                 accept_language=None,
                 user_agent=None,
-                x_firebase_token=None
+                x_firebase_token=None,
+                is_short_story=is_short_story,
+                is_clip=is_clip
             )
 
         return schemas.ListOfEntityResponse(
@@ -1130,6 +1151,11 @@ def get_stories_by_criteria(
 
     if is_short_story:
         key_tuple = ('short_stories_by_user', f"user_criteria - {current_user.id} - page - \
+                     {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - user_id - {user_id} - \
+                     hashtag_id - {hashtag_id} - search - {search}")
+        data, from_cache = cache.behind_cache(key_tuple, fatch_stories_criteria, ttl=7200)
+    elif is_clip:
+        key_tuple = ('clips_by_user', f"user_criteria - {current_user.id} - page - \
                      {page} - is_hugged - {is_hugged} - is_favorite - {is_favorite} - user_id - {user_id} - \
                      hashtag_id - {hashtag_id} - search - {search}")
         data, from_cache = cache.behind_cache(key_tuple, fatch_stories_criteria, ttl=7200)

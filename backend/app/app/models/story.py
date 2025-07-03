@@ -15,6 +15,7 @@ class Story(Base):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False, index=True)
     is_private = Column(Boolean, nullable=False, default=False, index=True)
     is_short_story = Column(Boolean, nullable=False, default=False, index=True)
+    is_clip = Column(Boolean, nullable=False, default=False, server_default="false", index=True)
 
     user = relationship(User, back_populates='stories', lazy='joined')
     attachments = relationship("StoryAttachment", cascade="all, delete-orphan", back_populates="story", lazy='joined', order_by="StoryAttachment.num")

@@ -261,7 +261,6 @@ class ETGOstrovokManager:
         payload = {
             "checkin": checkin_date,
             "checkout": checkout_date,
-            "residency": "uz",
             "hid": hid
         }
         if guests:

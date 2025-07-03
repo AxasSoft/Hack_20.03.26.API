@@ -74,12 +74,13 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
 
         db.commit()
 
-    def create_story_by_user(self, db, *, user: User, obj_in: CreatingStory, is_short_story: bool = False):
+    def create_story_by_user(self, db, *, user: User, obj_in: CreatingStory, is_short_story: bool = False, is_clip: bool = False):
         db_obj = Story()
         db_obj.user = user
         db_obj.text = obj_in.text
         db_obj.is_private = obj_in.is_private if obj_in.is_private is not None else None
         db_obj.is_short_story = is_short_story
+        db_obj.is_clip = is_clip
         db.add(db_obj)
 
         user.rating += 1
@@ -488,6 +489,7 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
             is_hugged: Optional[bool] = None,
             is_favorite: Optional[bool] = None,
             is_short_story: bool = False,
+            is_clip: bool = False,
             page: Optional[int] = None,
             current_user: Optional[User] = None,
             host: Optional[str],
@@ -504,6 +506,10 @@ class CRUDStory(CRUDBase[Story, CreatingStory, UpdatingStory]):
             query = query.filter(
                 Story.is_short_story == True,
                 Story.created >= now - datetime.timedelta(hours=24)
+            )
+        elif is_clip:
+            query = query.filter(
+                Story.is_clip == True,
             )
         else:
             query = query.filter(Story.is_short_story == False)
