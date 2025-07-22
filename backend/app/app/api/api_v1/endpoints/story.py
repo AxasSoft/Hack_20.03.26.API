@@ -319,7 +319,7 @@ def add_new_story(
     else:
         cache.delete_by_prefix('stories_by_user')
 
-    data, code, indexes = crud.story.create_story_by_user(db, user=current_user, obj_in=data, is_short_story=is_short_story)
+    data, code, indexes = crud.story.create_story_by_user(db, user=current_user, obj_in=data, is_short_story=is_short_story, is_clip=is_clip)
 
     if code == -2:
         raise ListOfEntityError(
@@ -416,6 +416,8 @@ def add_new_story(
 ):
     if is_short_story:
         cache.delete_by_prefix('short_stories_by_user')
+    elif is_clip:
+        cache.delete_by_prefix('clips_by_user')
     else:
         cache.delete_by_prefix('stories_by_user')
 
