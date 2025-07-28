@@ -1,4 +1,5 @@
 from typing import Optional, List
+import uuid
 
 from botocore.client import BaseClient
 from fastapi import APIRouter, Depends, Query, UploadFile, Form, HTTPException
@@ -171,17 +172,21 @@ def raw_create_credit_card_token(
         user_first_name: str,
         user_last_name: str,
         is_cvc_required: bool,
-        credit_card_data_core: schemas.CreditCardData,
-        cvc: Optional[str] = None,
+        credit_card_data: schemas.CreditCardWithCvc,
         current_user: models.User = Depends(deps.get_current_active_user)
 ):
+    pay_uuid = str(uuid.uuid4())
+    print('pay_uuid', pay_uuid)
+    init_uuid = str(uuid.uuid4())
+    print('init_uuid', init_uuid)
     resp =  ostrovok_manager.create_credit_card_token(
         object_id=object_id,
         user_first_name=user_first_name,
         user_last_name=user_last_name,
         is_cvc_required=is_cvc_required,
-        cvc=cvc,
-        credit_card_data_core=credit_card_data_core
+        credit_card_data=credit_card_data,
+        pay_uuid=pay_uuid,
+        init_uuid=init_uuid
     )
     return JSONResponse(content=resp)
 
