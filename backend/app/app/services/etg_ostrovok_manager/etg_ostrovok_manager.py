@@ -930,9 +930,14 @@ class ETGOstrovokManager:
             "rooms": [
                 {
                 "guests": [
+                    # {
+                    #     "first_name": user_data.first_name,
+                    #     "last_name": user_data.last_name,
+                    # }
+                    # Специальное имя для тестового брронирования
                     {
-                        "first_name": user_data.first_name,
-                        "last_name": user_data.last_name,
+                        "first_name": "Olesya",
+                        "last_name": "Ostrovok",
                     }
                 ]
                 }
