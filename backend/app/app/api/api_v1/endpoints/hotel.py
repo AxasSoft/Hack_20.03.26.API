@@ -393,3 +393,15 @@ def test_hotel_dump(
     return JSONResponse(content=resp)
 
 
+@router.get(
+    '/success/',
+    name="Заглушка для проверки 3ds",
+    tags=["Мобильное приложение / Отели"]
+)
+def point_for_3ds_check():
+    """
+    Эндпоинт для проверки 3ds
+    """
+    return None
+
+

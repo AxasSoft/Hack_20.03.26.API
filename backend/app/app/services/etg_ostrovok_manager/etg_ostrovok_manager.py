@@ -726,25 +726,20 @@ class ETGOstrovokManager:
             data: dict,
             method: str = 'post'
     ):
-        payload = data
-        logging.info("Payload for search: %s", payload)
-        print("Payload for search: %s", payload)
+        # payload = data
+        term_url = data.pop("TermUrl")
+        data["termurl"] = term_url
+        logging.info("Данные для прохождения проверки 3ds", data)
 
-        # headers = {
-        #     "Content-Type": "application/json",
-        #     "Authorization": f"Basic {self.encoded_credentials}"
-        # }
         response = requests.post(
             url,
             # headers=headers,
-            json=payload,
+            json=data,
             allow_redirects=True,
         )
-        logging.info("ETG response status code: %s", response.status_code)
+
         print("ETG response status code: %s", response.status_code)
-        logging.info("Response headers: %s", response.headers)
-        print("Response headers: %s", response.headers)
-        logging.info("ETG response: %s", response.content)
+
         print("ETG response: %s", response.content)
         # if "data" not in response:
         #     logging.info("ETG response: %s", response)
