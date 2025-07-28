@@ -175,7 +175,7 @@ def raw_create_credit_card_token(
         cvc: Optional[str] = None,
         current_user: models.User = Depends(deps.get_current_active_user)
 ):
-    resp =  ostrovok_manager.raw_create_credit_card_token(
+    resp =  ostrovok_manager.create_credit_card_token(
         object_id=object_id,
         user_first_name=user_first_name,
         user_last_name=user_last_name,
