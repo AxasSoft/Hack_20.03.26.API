@@ -515,8 +515,8 @@ class ETGOstrovokManager:
                 {
                 "guests": [
                     {
-                        "first_name": "Фы",
-                        "last_name": "Фы",
+                        "first_name": "Olesya",
+                        "last_name": "Ostrovok",
                     }
                 ]
                 }
