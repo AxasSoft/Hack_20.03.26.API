@@ -727,8 +727,8 @@ class ETGOstrovokManager:
             method: str = 'post'
     ):
         # payload = data
-        term_url = data.pop("TermUrl")
-        data["termurl"] = term_url
+        # term_url = data.pop("TermUrl")
+        # data["termurl"] = term_url
         logging.info("Данные для прохождения проверки 3ds", data)
 
         response = requests.post(
