@@ -818,6 +818,8 @@ class ETGOstrovokManager:
             checkout: int,
             user_id: int
     ):
+        print("* * * checkin", checkin)
+        print("* * * checkout", checkout)
         print("* * * Дата заезда", from_unix_timestamp(checkin).date())
         print("* * * Дата выезда", from_unix_timestamp(checkout).date())
         new_book_hash, verify_hash, pre_book_data, not_included_tax = self.prebooking(book_hash=book_hash)
