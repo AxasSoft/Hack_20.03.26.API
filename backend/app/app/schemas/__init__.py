@@ -56,3 +56,4 @@ from .snowmobile_booking import *
 from .hotel import *
 from .credit_card import *
 from .audio_guide import *
+from .gpt import *

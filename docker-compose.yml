@@ -1,6 +1,20 @@
 
 services:
 
+  free-gpt4:
+    image: d0ckmg/free-gpt4-web-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    command:
+      - --enable-gui
+      - --password
+      - ${PASSWORD_GPT}
+      - --port
+      - '5500'
+    ports:
+      - 5500:5500
+
   db:
     image: postgis/postgis:12-3.4
     env_file:
