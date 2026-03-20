@@ -1,26 +1,25 @@
 import asyncio
 import json
-import redis.asyncio as redis
 
+from sqlalchemy.orm import sessionmaker, Session
+
+from app.crud import CrudChat
 from app.services.free4gpt.gpt_manager import gpt_manager
+from app.api.deps import get_redis, get_engine
+from app.schemas import SendingMessage
 
-def get_redis():
-    redis_instance = redis.StrictRedis(
-        host='85.92.111.28',
-        port=6379,
-        password=r'Ah%\no4{WKi\m(',
-        username='default'
-    )
-    return redis_instance
 
 redis_client = get_redis()
 
+db: Session = sessionmaker(
+    autocommit=False, autoflush=False, expire_on_commit=False, bind=get_engine()
+)()
 
 async def run_worker():
     pubsub = redis_client.pubsub()
-    await pubsub.subscribe("chat-neuro")
+    pubsub.subscribe("chat-neuro")
 
-    async for message in pubsub.listen():
+    for message in pubsub.listen():
         if message["type"] != "message":
             continue
 
@@ -37,6 +36,25 @@ async def run_worker():
                 gpt_manager.get_answer,
                 question
             )
+            crud_chat = CrudChat(s3_client=None, s3_bucket_name=None)
+            chat  = await loop.run_in_executor(
+                None,
+                crud_chat.get_chat_by_id,
+                db,
+                chat_id
+            )
+            message = SendingMessage(
+                text=answer,
+                attachments=[0]
+            )
+            await loop.run_in_executor(
+                None,
+                crud_chat.send_message,
+                db,
+                None,
+                chat,
+                message
+            )
 
             response = {
                 'chat_id': chat_id,
@@ -45,13 +63,14 @@ async def run_worker():
                 'error': None,
             }
 
-            await redis_client.publish(
+            redis_client.publish(
                 f"chat-{user_id}",
                 json.dumps(response, ensure_ascii=False)
             )
 
         except Exception as e:
-            await redis_client.publish(
+            db.rollback()
+            redis_client.publish(
                 f"chat-{user_id}",
                 json.dumps({
                     'chat_id': chat_id,
@@ -60,6 +79,9 @@ async def run_worker():
                     'error': str(e),
                 })
             )
+        finally:
+            db.commit()
+            db.close()
 
 if __name__ == "__main__":
     asyncio.run(run_worker())

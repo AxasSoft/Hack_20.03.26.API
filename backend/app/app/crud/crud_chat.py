@@ -510,34 +510,44 @@ class CrudChat:
         except (NoCredentialsError, ClientError) as e:
             return False
 
-    def send_message(self, db: Session, current_user: User, chat: Chat, message: SendingMessage):
-        member = db.query(Member)\
-            .filter(
-                Member.user_id == current_user.id,
-                or_(Member.initiated_chat == chat, Member.received_chat == chat)
-            )\
-            .first()
-        if member is None:
-            return None
-        if member.is_blocker:
-            raise InaccessibleEntity('Вы заблокировали этого пользователя')
-        if member.is_blocked:
-            raise InaccessibleEntity('Пользователь вас заблокировал')
+    def send_message(self, db: Session, current_user: Optional[User], chat: Chat, message: SendingMessage):
+        print("user")
+        print(current_user)
+        if current_user is None:
+            print("2")
+            db_message = Message()
+            db_message.text = message.text
+            db_message.parent_id = None
+            db.add(db_message)
+            db.commit()
+        else:
+            member = db.query(Member)\
+                .filter(
+                    Member.user_id == current_user.id,
+                    or_(Member.initiated_chat == chat, Member.received_chat == chat)
+                )\
+                .first()
+            if member is None:
+                return None
+            if member.is_blocker:
+                raise InaccessibleEntity('Вы заблокировали этого пользователя')
+            if member.is_blocked:
+                raise InaccessibleEntity('Пользователь вас заблокировал')
 
-        db_message = Message()
-        db_message.sender = member
-        db_message.text = message.text
-        db_message.parent_id = message.parent_id if message.parent_id else None
-        db.add(db_message)
-        for attachment_id in message.attachments:
-            db_attachment: Optional[Attachment] = db.query(Attachment).get(attachment_id)
-            if db_attachment is None:
-                continue
-            if db_attachment.message is not None:
-                continue
-            db_attachment.message = db_message
-            db.add(db_attachment)
-        db.commit()
+            db_message = Message()
+            db_message.sender = member
+            db_message.text = message.text
+            db_message.parent_id = message.parent_id if message.parent_id else None
+            db.add(db_message)
+            for attachment_id in message.attachments:
+                db_attachment: Optional[Attachment] = db.query(Attachment).get(attachment_id)
+                if db_attachment is None:
+                    continue
+                if db_attachment.message is not None:
+                    continue
+                db_attachment.message = db_message
+                db.add(db_attachment)
+            db.commit()
 
         if chat.initiator:
             chat.initiator.last_message = db_message
