@@ -336,7 +336,7 @@ class CrudChat:
             mode = 'before'
         recipient: Member = chat.recipient
         initiator: Member = chat.initiator
-        if recipient.user == current_user:
+        if recipient and recipient.user == current_user:
             current_member = recipient
         elif initiator.user == current_user:
             current_member = initiator
@@ -345,19 +345,30 @@ class CrudChat:
 
         delete_before_id = current_member.delete_before_id
 
-        query = db.query(Message) \
-            .join(
+        if recipient:
+            query = db.query(Message) \
+                .join(
+                    DeletedMessage,
+                    and_(DeletedMessage.message_id == Message.id, DeletedMessage.member_id == current_member.id),
+                    isouter=True
+                ) \
+                .filter(
+                    Message.sender_id.in_(
+                        (recipient.id, initiator.id,)
+                    ),
+                    DeletedMessage.id == None
+                )
+        else:
+            query = db.query(Message) \
+                .join(
                 DeletedMessage,
                 and_(DeletedMessage.message_id == Message.id, DeletedMessage.member_id == current_member.id),
                 isouter=True
             ) \
-            .filter(
-                Message.sender_id.in_(
-                    (recipient.id, initiator.id,)
-                ),
+                .filter(
+                Message.sender_id == initiator.id,
                 DeletedMessage.id == None
             )
-
         if delete_before_id is not None:
             query = query.filter(Message.id > delete_before_id)
 

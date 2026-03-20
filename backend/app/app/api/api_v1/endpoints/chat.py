@@ -223,7 +223,10 @@ def get_messages_of_chat(
     chat = crud_chat.get_chat_by_id(db=db,id=chat_id)
     if chat is None:
         raise UnfoundEntity('Чат не найден')
-    if current_user not in (chat.recipient.user, chat.initiator.user):
+    if chat.recipient is None:
+        if current_user is not chat.initiator.user:
+            raise InaccessibleEntity('Недоступный чат')
+    elif current_user not in (chat.recipient.user, chat.initiator.user):
         raise InaccessibleEntity('Недоступный чат')
 
     if timestamp is None:
