@@ -132,39 +132,61 @@ class CrudChat:
     def get_attachment_by_id(self, db: Session, id: int):
         return db.query(Attachment).get(id)
 
-    def get_active_chats(self, db: Session, current_user: User, page: Optional[int], 
-                         type_chat: Optional[int], is_empty_chat: Optional[bool]):
-
+    def get_active_chats(
+            self,
+            db: Session,
+            current_user: User,
+            page: Optional[int],
+            type_chat: Optional[int],
+            is_empty_chat: Optional[bool]
+    ):
         Member1 = alias(Member)
         Member2 = alias(Member)
 
-        active_members_subquery  = db.query(Member.id).filter(
-            Member.user_id == current_user.id,
-            Member.ended == None 
-        ).subquery()
+        active_members_subquery = (
+            db.query(Member.id)
+            .filter(
+                Member.user_id == current_user.id,
+                Member.ended == None
+            )
+            .subquery()
+        )
 
         query = (
             db.query(Chat)
-                .join(Member1, Chat.initiator_id == Member1.c.id)
-                .join(Member2, Chat.recipient_id == Member2.c.id)
-                .join(
+            .join(Member1, Chat.initiator_id == Member1.c.id)
+            .outerjoin(Member2, Chat.recipient_id == Member2.c.id)  # FIX
+            .outerjoin(
                 Message,
                 or_(
-                    and_(Member1.c.user_id == current_user.id, Member1.c.last_message_id == Message.id),
-                    and_(Member2.c.user_id == current_user.id, Member2.c.last_message_id == Message.id)
-                ),
-                isouter=True
+                    and_(
+                        Member1.c.user_id == current_user.id,
+                        Member1.c.last_message_id == Message.id
+                    ),
+                    and_(
+                        Member2.c.user_id == current_user.id,
+                        Member2.c.last_message_id == Message.id
+                    )
+                )
             )
-                .filter(or_(Member1.c.user_id == current_user.id, Member2.c.user_id == current_user.id)) \
-                .filter(or_(Member1.c.id.in_(active_members_subquery), Member2.c.id.in_(active_members_subquery)))  # Фильтрация по полю ended
-                .order_by(desc(Message.created))
+            .filter(
+                or_(
+                    Member1.c.user_id == current_user.id,
+                    Member2.c.user_id == current_user.id
+                )
+            )
+            .filter(
+                or_(
+                    Member1.c.id.in_(active_members_subquery),
+                    Member2.c.id.in_(active_members_subquery)
+                )
+            )
+            .order_by(desc(Message.created))
         )
 
         if type_chat is not None:
             type_chat_str = TypeChat(type_chat).name
-            query = query.filter(
-                and_(Chat.type_chat == type_chat_str, Chat.type_chat != None)
-                )
+            query = query.filter(Chat.type_chat == type_chat_str)
 
         if is_empty_chat is False:
             query = query.filter(
@@ -173,6 +195,8 @@ class CrudChat:
                     Member2.c.last_message_id != None
                 )
             )
+
+        return pagination.get_page(query, page)
 
 
         return pagination.get_page(
@@ -513,7 +537,6 @@ class CrudChat:
                 continue
             db_attachment.message = db_message
             db.add(db_attachment)
-
         db.commit()
 
         if chat.initiator:
