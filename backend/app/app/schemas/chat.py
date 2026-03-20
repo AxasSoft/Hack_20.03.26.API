@@ -34,7 +34,7 @@ class GettingChat(IdModel, BaseModel):
     type_chat: Optional[TypeChat]
     count_unread_messages: Optional[int]
     quantity_messages: Optional[int]
-    user: GettingUserShortInfo
+    user: Optional[GettingUserShortInfo]
     last_message: Optional[GettingMessage]
     is_blocked: bool
     is_blocker: bool

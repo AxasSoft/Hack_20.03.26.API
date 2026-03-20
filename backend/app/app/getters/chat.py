@@ -50,7 +50,7 @@ def get_message_with_parent(message, db, user):
 def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
     recipient: Member = chat.recipient
     initiator: Member = chat.initiator
-    if recipient.user == current_user:
+    if recipient and recipient.user == current_user:
         current_member = recipient
         second_member = initiator
     else:
@@ -61,16 +61,26 @@ def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
     if last_message is None:
         delete_before_id = current_member.delete_before_id
 
-        query =  db.query(Message) \
-            .join(
+        if recipient:
+            query =  db.query(Message) \
+                .join(
+                    DeletedMessage,
+                    and_(DeletedMessage.message_id == Message.id, DeletedMessage.member_id == current_member.id),
+                    isouter=True
+                ) \
+                .filter(
+                    Message.sender_id == initiator.id,
+                    DeletedMessage.id == None
+                )
+        else:
+            query = db.query(Message) \
+                .join(
                 DeletedMessage,
                 and_(DeletedMessage.message_id == Message.id, DeletedMessage.member_id == current_member.id),
                 isouter=True
             ) \
-            .filter(
-                Message.sender_id.in_(
-                    (recipient.id, initiator.id,)
-                ),
+                .filter(
+                Message.sender_id == initiator.id,
                 DeletedMessage.id == None
             )
         if delete_before_id is not None:
@@ -80,23 +90,35 @@ def get_chat(db: Session, chat: Chat, current_user: User) -> GettingChat:
 
         last_message = query.first()
 
-    count_unread_messages = db.query(func.count(Message.id)) \
-        .filter(
-            Message.sender_id.in_((recipient.id, initiator.id)),
+    if recipient:
+        count_unread_messages = db.query(func.count(Message.id)) \
+            .filter(
+                Message.sender_id.in_((recipient.id, initiator.id)),
+                Message.is_read == False,
+                Message.sender_id != current_member.id
+            ).scalar()
+    else:
+        count_unread_messages = db.query(func.count(Message.id)) \
+            .filter(
+            Message.sender_id == initiator.id,
             Message.is_read == False,
             Message.sender_id != current_member.id
         ).scalar()
 
-    quantity_messages = db.query(func.count(Message.id)) \
-        .filter(Message.sender_id.in_((recipient.id, initiator.id))) \
-        .scalar()
-
+    if recipient:
+        quantity_messages = db.query(func.count(Message.id)) \
+            .filter(Message.sender_id.in_((recipient.id, initiator.id))) \
+            .scalar()
+    else:
+        quantity_messages = db.query(func.count(Message.id)) \
+            .filter(Message.sender_id == initiator.id) \
+            .scalar()
     result = GettingChat(
             id=chat.id,
             count_unread_messages=count_unread_messages if count_unread_messages else 0,
             quantity_messages=quantity_messages if quantity_messages else 0,
             type_chat=chat.type_chat if chat.type_chat else None,
-            user=get_user_short_info(second_member.user),
+            user=get_user_short_info(second_member.user) if second_member else None,
             last_message=get_message(
                 db=db,
                 message=last_message,

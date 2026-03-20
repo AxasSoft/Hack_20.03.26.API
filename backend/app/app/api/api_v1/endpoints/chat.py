@@ -5,7 +5,7 @@ from typing import Optional, List
 import logging
 
 import asyncio
-from app import crud, models, schemas, getters
+from app import crud, models, schemas, getters, enums
 from app.api import deps
 from app.notification.notificator import Notificator
 from app.schemas.response import Meta
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketDisconnect
 from pydantic import conint
 
+from app.services.free4gpt.gpt_manager import gpt_manager
 from ....core.connection_manager import ConnectionManager
 from ....crud import CrudChat
 from ....exceptions import UnfoundEntity, InaccessibleEntity
@@ -66,7 +67,7 @@ def get_active_chats(
         current_user: Optional[models.User] = Depends(deps.get_current_user),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
-        type_chat: conint(ge=0, le=2) = Query(None, title="Тип Чата"),
+        type_chat: conint(ge=0, le=3) = Query(None, title="Тип Чата"),
         is_empty_chat: Optional[bool] = True,
         page: Optional[int] = Query(None),
         cache: Cache = Depends(deps.get_cache_list),
@@ -101,13 +102,14 @@ def get_active_chats(
 @router.post(
     '/users/{user_id}/chats/',
     response_model=schemas.SingleEntityResponse[GettingChat],
-    name="Начать или продолжить чат с пользователем",
+    name="Начать или продолжить чат с пользователем или искусственным интеллектом",
     description='''
     type_chat - Тип чата   
     ```
     personal = 0
     dating = 1
     order = 2
+    neuro = 3
     ```''',
     responses={
         400: {
@@ -130,17 +132,19 @@ async def init_chat(
         current_user: models.User = Depends(deps.get_current_user),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
-        user_id: int = Path(..., title="Идентификатор пользователя, с которым необходимо начать или продолжить диалог"),
-        type_chat: conint(ge=0, le=2) = Query(..., title="Тип Чата"),
+        type_chat: conint(ge=0, le=3) = Query(..., title="Тип Чата"),
         cache: Cache = Depends(deps.get_cache_sing),
+        user_id: int = Path(..., title="Идентификатор пользователя, с которым необходимо начать или продолжить диалог"),
 ):
     async def fatch_chat_user():
-        user = crud.user.get_by_id(db=db, id=user_id)
-        if user is None:
-            raise UnfoundEntity('Собеседник не найден')
+        user = None
+        if type_chat != 3 and user_id != 0:
+            user = crud.user.get_by_id(db=db, id=user_id)
+            if user is None:
+                raise UnfoundEntity('Собеседник не найден')
         crud_chat = CrudChat(s3_client=s3_client, s3_bucket_name=s3_bucket_name)
         chat, created = crud_chat.init_chat(db=db, initiator=current_user, recipient=user, type_chat=type_chat)
-        if created:
+        if created and user_id:
             await event_manager.send_personal_message(
                 json.dumps(
                     {
@@ -363,53 +367,67 @@ async def send_message_in_chat(
     chat = crud_chat.get_chat_by_id(db=db,id=chat_id)
     if chat is None:
         raise UnfoundEntity('Чат не найден')
-
-    if current_user == chat.recipient.user:
-        second_user = chat.initiator.user
-    elif current_user == chat.initiator.user:
-        second_user = chat.recipient.user
+    if chat.type_chat == enums.type_chat.TypeChat.neuro:
+        message = crud_chat.send_message(db=db, current_user=current_user, chat=chat, message=message)
+        second_user = None
     else:
-        raise InaccessibleEntity('Недоступный чат')
+        if current_user == chat.recipient.user:
+            second_user = chat.initiator.user
+        elif current_user == chat.initiator.user:
+            second_user = chat.recipient.user
+        else:
+            raise InaccessibleEntity('Недоступный чат')
 
-    message = crud_chat.send_message(db=db,current_user=current_user,chat=chat, message=message)
+        message = crud_chat.send_message(db=db,current_user=current_user,chat=chat, message=message)
 
-    await event_manager.send_personal_message(
-        json.dumps(
-            {
-                'event': 'receive',
-                'type': 'Message',
-                'id': message.id
-            }
-        ),
-        second_user.id
-    )
+        await event_manager.send_personal_message(
+            json.dumps(
+                {
+                    'event': 'receive',
+                    'type': 'Message',
+                    'id': message.id
+                }
+            ),
+            second_user.id
+        )
 
 
-    await msg_manager.send_personal_message(
-        json.dumps(
-            {
-                'chat': chat.id,
-                'message': get_message_with_parent(db=db, message=message, user=current_user).dict()
-            }
-        ),
-        second_user.id
-    )
+        await msg_manager.send_personal_message(
+            json.dumps(
+                {
+                    'chat': chat.id,
+                    'message': get_message_with_parent(db=db, message=message, user=current_user).dict()
+                }
+            ),
+            second_user.id
+        )
 
     logging.info('start publishing')
 
 
-    data = json.dumps(
-        {
-            'chat': chat.id,
-            'message': get_message_with_parent(db=db, message=message, user=current_user).dict()
-        }
-    )
-
-    logging.info(f'message for publication:{data}')
-
     # Публикация сообщения в Redis
-    published = redis_instance.publish(f'chat-{second_user.id}', data)
+    if second_user:
+        data = json.dumps(
+            {
+                'chat': chat.id,
+                'message': get_message_with_parent(db=db, message=message, user=current_user).dict()
+            }
+        )
 
+        logging.info(f'message for publication:{data}')
+        published = redis_instance.publish(f'chat-{second_user.id}', data)
+    else:
+        data = json.dumps(
+            {
+                'chat': chat.id,
+                'message_text': message.text,
+                'user_id': current_user.id,
+            }
+            , ensure_ascii=False
+        )
+
+        logging.info(f'message for publication:{data}')
+        published = redis_instance.publish(f'chat-neuro', data)
     # Логирование результата публикации
     logging.info(f'result of the publication:{published}')
 
@@ -422,15 +440,16 @@ async def send_message_in_chat(
 
     logging.info('end publishing')
 
-    notificator.notify(
-        db=db,
-        recipient=second_user,
-        text=message.text,
-        title=get_full_name(message.sender.user),
-        icon=current_user.avatar,
-        chat=chat_id,
-        link=f'krasnodar://chat?id={str(chat_id)}'
-    )
+    if second_user:
+        notificator.notify(
+            db=db,
+            recipient=second_user,
+            text=message.text,
+            title=get_full_name(message.sender.user),
+            icon=current_user.avatar,
+            chat=chat_id,
+            link=f'krasnodar://chat?id={str(chat_id)}'
+        )
     return schemas.SingleEntityResponse(
         data=get_message_with_parent(db=db, message=message, user=current_user)
     )
@@ -550,6 +569,7 @@ async def websocket_endpoint(
         logging.info(f'Unsubscribed from the channel: chat-{current_user.id}')
         pubsub.close()
         logging.info('Closed Pub/Sub')
+
 
 @router.post(
     '/chats/messages/is_read/',

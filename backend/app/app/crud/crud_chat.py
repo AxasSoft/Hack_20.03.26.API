@@ -206,7 +206,7 @@ class CrudChat:
 
         return unread_messages_count
 
-    def init_chat(self, db: Session, initiator: User, recipient: User, type_chat: int):
+    def init_chat(self, db: Session, initiator: User, recipient: Optional[User], type_chat: int):
         created = False
         logging.info(f"initiator={initiator}")
         logging.info(f"recipient={recipient}")
@@ -215,18 +215,28 @@ class CrudChat:
         Member2 = alias(Member)
 
         type_chat_str = TypeChat(type_chat).name if type_chat is not None else None
-
-        chat = db.query(Chat) \
-            .join(Member1, Chat.recipient_id == Member1.c.id) \
-            .join(Member2, Chat.initiator_id == Member2.c.id) \
-            .filter(
-                or_(
-                    and_(Member1.c.user_id == recipient.id, Member2.c.user_id == initiator.id),
-                    and_(Member2.c.user_id == recipient.id, Member1.c.user_id == initiator.id),
-                ),
-                Chat.type_chat == type_chat_str
-            ) \
-            .first()
+        if type_chat == 3:
+            chat = db.query(Chat) \
+                .join(Member1, Chat.initiator_id == Member1.c.id) \
+                .filter(
+                    and_(
+                        Member1.c.user_id == initiator.id,
+                        Chat.type_chat == type_chat_str,
+                    )
+                ) \
+                .first()
+        else:
+            chat = db.query(Chat) \
+                .join(Member1, Chat.recipient_id == Member1.c.id) \
+                .join(Member2, Chat.initiator_id == Member2.c.id) \
+                .filter(
+                    or_(
+                        and_(Member1.c.user_id == recipient.id, Member2.c.user_id == initiator.id),
+                        and_(Member2.c.user_id == recipient.id, Member1.c.user_id == initiator.id),
+                    ),
+                    Chat.type_chat == type_chat_str
+                ) \
+                .first()
 
         if chat is None:
             created = True
@@ -234,12 +244,14 @@ class CrudChat:
             initiator_member.user = initiator
             initiator_member.started = datetime.datetime.utcnow()
             db.add(initiator_member)
-            recipient_member = Member()
-            recipient_member.user = recipient
-            recipient_member.started = datetime.datetime.utcnow()
-            db.add(recipient_member)
+            recipient_member = None
+            if recipient:
+                recipient_member = Member()
+                recipient_member.user = recipient
+                recipient_member.started = datetime.datetime.utcnow()
+                db.add(recipient_member)
             chat = Chat()
-            chat.recipient = recipient_member
+            chat.recipient = recipient_member if recipient_member else None
             chat.initiator = initiator_member
             if type_chat is not None:
                 type_chat_str = TypeChat(type_chat)
@@ -491,7 +503,7 @@ class CrudChat:
         db_message = Message()
         db_message.sender = member
         db_message.text = message.text
-        db_message.parent_id = message.parent_id
+        db_message.parent_id = message.parent_id if message.parent_id else None
         db.add(db_message)
         for attachment_id in message.attachments:
             db_attachment: Optional[Attachment] = db.query(Attachment).get(attachment_id)
@@ -504,16 +516,19 @@ class CrudChat:
 
         db.commit()
 
-        chat.initiator.last_message = db_message
-        chat.recipient.last_message = db_message
-
-        db.add(chat.recipient)
-        db.add(chat.initiator)
+        if chat.initiator:
+            chat.initiator.last_message = db_message
+            db.add(chat.initiator)
+        if chat.recipient:
+            chat.recipient.last_message = db_message
+            db.add(chat.recipient)
 
         db.commit()
 
-        self._update_member_status(db=db, user_id=chat.initiator.user_id, chat=chat)
-        self._update_member_status(db=db, user_id=chat.recipient.user_id, chat=chat)
+        if chat.initiator:
+            self._update_member_status(db=db, user_id=chat.initiator.user_id, chat=chat)
+        if chat.recipient:
+            self._update_member_status(db=db, user_id=chat.recipient.user_id, chat=chat)
 
         return db_message
 

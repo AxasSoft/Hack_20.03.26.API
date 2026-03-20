@@ -2,7 +2,6 @@ import logging
 import requests
 import re
 
-import httpx
 from app.exceptions import UnprocessableEntity
 
 promt = """
@@ -136,3 +135,4 @@ class GPTManager:
         return  cleaned_text
 
 gpt_manager = GPTManager()
+
