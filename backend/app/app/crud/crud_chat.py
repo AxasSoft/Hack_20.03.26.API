@@ -49,13 +49,13 @@ class CrudChat:
 
         return last_message
     
-    def _get_all_active_chat(self, db:Session, current_user: User, type_chat: Optional[int]):
+    def _get_all_active_chat(self, db:Session, current_user: User, type_chat: Optional[List[int]]):
         Member1 = alias(Member)
         Member2 = alias(Member)
 
         active_members_subquery  = db.query(Member.id).filter(
             Member.user_id == current_user.id,
-            Member.ended == None 
+            Member.ended == None
         ).subquery()
 
         query = (
@@ -75,16 +75,16 @@ class CrudChat:
                 .order_by(desc(Message.created))
         )
 
-        if type_chat is not None:
-            type_chat_str = TypeChat(type_chat).name
+        if type_chat:
+            type_chat_str_list = [TypeChat(t).name for t in type_chat]
             query = query.filter(
-                and_(Chat.type_chat == type_chat_str, Chat.type_chat != None)
-                )
-            
+                Chat.type_chat.in_(type_chat_str_list)
+            )
+
         all_chat = query.all()
         return all_chat
 
-    
+
      # Обновление статуса участников чата
     def _update_member_status(self, db: Session, user_id: int , chat: Chat):
         member = db.query(Member)\
@@ -101,9 +101,9 @@ class CrudChat:
             db.add(member)
             db.commit()
             db.refresh(member)
-    
+
     def find_member(self, db: Session, chat_id: int, user: User):
-        
+
         member_subquery = db.query(Member.id).filter(
             Member.user_id == user.id,
             or_(
@@ -115,7 +115,7 @@ class CrudChat:
         return db.query(Member) \
             .filter(Member.id.in_(member_subquery)) \
             .first()
-    
+
     def remove_members(self, db: Session, member: Member):
         if member:
             member.ended = datetime.datetime.utcnow()
@@ -137,7 +137,7 @@ class CrudChat:
             db: Session,
             current_user: User,
             page: Optional[int],
-            type_chat: Optional[int],
+            type_chat: Optional[List[int]],
             is_empty_chat: Optional[bool]
     ):
         Member1 = alias(Member)
@@ -184,9 +184,9 @@ class CrudChat:
             .order_by(desc(Message.created))
         )
 
-        if type_chat is not None:
-            type_chat_str = TypeChat(type_chat).name
-            query = query.filter(Chat.type_chat == type_chat_str)
+        if type_chat:
+            type_chat_str_list = [TypeChat(t).name for t in type_chat]
+            query = query.filter(Chat.type_chat.in_(type_chat_str_list))
 
         if is_empty_chat is False:
             query = query.filter(

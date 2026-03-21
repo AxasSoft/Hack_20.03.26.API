@@ -68,17 +68,22 @@ def get_active_chats(
         current_user: Optional[models.User] = Depends(deps.get_current_user),
         s3_client: BaseClient = Depends(deps.get_s3_client),
         s3_bucket_name: str = Depends(deps.get_bucket_name),
-        type_chat: conint(ge=0, le=3) = Query(None, title="Тип Чата"),
+        type_chat: Optional[List[conint(ge=0, le=3)]] = Query(None, title="Типы Чата"),
         is_empty_chat: Optional[bool] = True,
         page: Optional[int] = Query(None),
         cache: Cache = Depends(deps.get_cache_list),
 ):
-    
+
     def fatch_chat_all():
         crud_chat = CrudChat(s3_client=s3_client, s3_bucket_name=s3_bucket_name)
 
-        data, paginator = crud_chat.get_active_chats(db=db, current_user=current_user, page=page, 
-                                                    type_chat=type_chat, is_empty_chat=is_empty_chat)
+        data, paginator = crud_chat.get_active_chats(
+            db=db,
+            current_user=current_user,
+            page=page,
+            type_chat=type_chat,
+            is_empty_chat=is_empty_chat
+        )
 
         return schemas.ListOfEntityResponse(
             data=[
