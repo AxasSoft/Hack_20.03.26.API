@@ -563,7 +563,6 @@ async def websocket_endpoint(
                 try:
                     data = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
                     logging.info(f'A message has been received from the client:{data}')
-                    await websocket.send_text(data)
                     logging.info(f'A message has been sent to the client: {data}')
                 except asyncio.TimeoutError:
                     logging.info('Timeout for waiting for a message from the client')
