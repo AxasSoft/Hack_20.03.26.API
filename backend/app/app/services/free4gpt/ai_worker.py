@@ -58,7 +58,7 @@ async def run_worker():
             )
 
             response = {
-                'chat_id': chat_id,
+                'chat': chat_id,
                 'message': get_message_with_parent(db=db, message=message, user=None).dict(),
                 'error': None,
             }
@@ -73,11 +73,12 @@ async def run_worker():
             redis_client.publish(
                 f"chat-{user_id}",
                 json.dumps({
-                    'chat_id': chat_id,
+                    'chat': chat_id,
                     "message": None,
-                    'error': str(e),
+                    'error': 'Сервис временно недоступен',
                 })
             )
+            print(e)
         finally:
             db.commit()
             db.close()
