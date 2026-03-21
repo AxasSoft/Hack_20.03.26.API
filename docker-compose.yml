@@ -77,6 +77,23 @@ services:
     depends_on:
       - db
 
+  redis:
+    image: "redis:alpine"
+    restart: unless-stopped
+    command: "redis-server --appendonly yes --port 6480 --timeout 300 --tcp-keepalive 60"
+    volumes:
+      - ./redis:/data
+
+
+  redis-commander:
+    image: "rediscommander/redis-commander:latest"
+    restart: unless-stopped
+    ports:
+      - 8043:8081
+    environment:
+      - "REDIS_HOSTS=local:redis:6480"
+    depends_on:
+      - "redis"
 #  redis:
 #    image: redis:alpine
 #    restart: always

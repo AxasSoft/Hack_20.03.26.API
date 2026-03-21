@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Generator, Optional
 
 import boto3
-import redis
+from redis import Redis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
@@ -188,13 +188,9 @@ def get_notificator() -> Notificator:
 
 
 def get_redis():
-    redis_instance = redis.StrictRedis(
-        host='85.92.111.28',
-        port=6379,
-        password=r'Ah%\no4{WKi\m(',
-        username='default'
+    return Redis.from_url(
+        "redis://redis:6480/0",
     )
-    return redis_instance
 
 
 # def get_redis():
