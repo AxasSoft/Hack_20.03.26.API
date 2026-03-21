@@ -45,7 +45,7 @@ async def run_worker():
                 db,
                 chat_id
             )
-            getting_user = crud.user.get_by_id(db, user_id)
+            getting_user = crud.user.get_by_id(db, 0)
             sending_message = CreatingMessageWithParent(
                 text=answer,
                 attachments=[0],
