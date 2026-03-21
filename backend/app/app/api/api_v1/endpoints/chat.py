@@ -143,11 +143,9 @@ async def init_chat(
         user_id: int = Path(..., title="Идентификатор пользователя, с которым необходимо начать или продолжить диалог"),
 ):
     async def fatch_chat_user():
-        user = None
-        if type_chat != 3 and user_id != 0:
-            user = crud.user.get_by_id(db=db, id=user_id)
-            if user is None:
-                raise UnfoundEntity('Собеседник не найден')
+        user = crud.user.get_by_id(db=db, id=user_id)
+        if user is None:
+            raise UnfoundEntity('Собеседник не найден')
         crud_chat = CrudChat(s3_client=s3_client, s3_bucket_name=s3_bucket_name)
         chat, created = crud_chat.init_chat(db=db, initiator=current_user, recipient=user, type_chat=type_chat)
         if created and user_id:
@@ -228,9 +226,6 @@ def get_messages_of_chat(
     chat = crud_chat.get_chat_by_id(db=db,id=chat_id)
     if chat is None:
         raise UnfoundEntity('Чат не найден')
-    if chat.recipient is None:
-        if current_user is not chat.initiator.user:
-            raise InaccessibleEntity('Недоступный чат')
     elif current_user not in (chat.recipient.user, chat.initiator.user):
         raise InaccessibleEntity('Недоступный чат')
 

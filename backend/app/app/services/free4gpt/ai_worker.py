@@ -4,9 +4,10 @@ import json
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.crud import CrudChat
+from app import crud
 from app.services.free4gpt.gpt_manager import gpt_manager
 from app.api.deps import get_redis, get_engine
-from app.schemas import SendingMessage
+from app.schemas import CreatingMessageWithParent
 from app.getters import get_message_with_parent
 
 
@@ -44,22 +45,24 @@ async def run_worker():
                 db,
                 chat_id
             )
-            sending_message = SendingMessage(
+            getting_user = crud.user.get_by_id(db, user_id)
+            sending_message = CreatingMessageWithParent(
                 text=answer,
-                attachments=[0]
+                attachments=[0],
+                parent_id=0,
             )
             message = await loop.run_in_executor(
                 None,
                 crud_chat.send_message,
                 db,
-                None,
+                getting_user,
                 chat,
                 sending_message
             )
 
             response = {
                 'chat': chat_id,
-                'message': get_message_with_parent(db=db, message=message, user=None).dict(),
+                'message': get_message_with_parent(db=db, message=message, user=getting_user).dict(),
             }
 
             redis_client.publish(
