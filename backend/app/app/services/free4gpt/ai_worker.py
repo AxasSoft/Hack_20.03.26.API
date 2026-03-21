@@ -7,6 +7,7 @@ from app.crud import CrudChat
 from app.services.free4gpt.gpt_manager import gpt_manager
 from app.api.deps import get_redis, get_engine
 from app.schemas import SendingMessage
+from app.getters import get_message_with_parent
 
 
 redis_client = get_redis()
@@ -43,23 +44,22 @@ async def run_worker():
                 db,
                 chat_id
             )
-            message = SendingMessage(
+            sending_message = SendingMessage(
                 text=answer,
                 attachments=[0]
             )
-            await loop.run_in_executor(
+            message = await loop.run_in_executor(
                 None,
                 crud_chat.send_message,
                 db,
                 None,
                 chat,
-                message
+                sending_message
             )
 
             response = {
                 'chat_id': chat_id,
-                "answer": answer,
-                'source': "ai",
+                'message': get_message_with_parent(db=db, message=message, user=None).dict(),
                 'error': None,
             }
 
@@ -74,8 +74,7 @@ async def run_worker():
                 f"chat-{user_id}",
                 json.dumps({
                     'chat_id': chat_id,
-                    "answer": None,
-                    'source': "ai",
+                    "message": None,
                     'error': str(e),
                 })
             )
