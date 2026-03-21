@@ -21,7 +21,7 @@ def get_message(db: Session, message: Message, current_user: Optional[User]) -> 
     result =  GettingMessage(
         id=message.id,
         created=to_timestamp(message.created),
-        sender=get_user_short_info(db_obj=message.sender.user),
+        sender=get_user_short_info(db_obj=message.sender.user) if message.sender.user is not None else None,
         text=message.text,
         is_read=bool(message.is_read),
         attachments=[

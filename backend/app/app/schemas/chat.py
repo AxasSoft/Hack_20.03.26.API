@@ -15,7 +15,7 @@ class GettingAttachment(IdModel, BaseModel):
 
 class GettingMessage(IdModel, BaseModel):
     created: Optional[int]
-    sender: GettingUserShortInfo
+    sender: Optional[GettingUserShortInfo]
     text: Optional[str]
     is_read: bool
     attachments: List[GettingAttachment]
