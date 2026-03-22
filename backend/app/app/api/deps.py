@@ -26,11 +26,11 @@ from ..services.gsms_tg_sender.base_gsms_tg_sender import BaseTgSender
 from ..services.gsms_tg_sender.gsms_tg_sender import GsmsTgSender
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token/"
 )
 
 optional_reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token",
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token/",
     auto_error=False
 )
 
